@@ -27,7 +27,7 @@
 .app-main {
   flex: 1;
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(320px, 1.1fr);
+  grid-template-columns: 260px minmax(280px, 1fr) minmax(320px, 1.1fr) 280px;
   gap: 1.5rem;
   align-items: start;
 }
@@ -42,15 +42,25 @@
   align-items: center;
 }
 
-.app-footer {
-  text-align: center;
-  color: #4b5b70;
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
+@media (max-width: 1400px) {
+  .app-main {
+    grid-template-columns: 240px minmax(280px, 1fr) minmax(320px, 1.1fr);
+  }
+
+  .context-panel {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
 }
 
 @media (max-width: 860px) {
   .app-main {
     grid-template-columns: 1fr;
+  }
+
+  .sidebar,
+  .context-panel {
+    width: 100%;
+    max-height: none;
   }
 }

@@ -1,0 +1,76 @@
+.desktop-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.desktop-controls-web-note {
+  font-size: 0.75rem;
+  color: #566578;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.desktop-controls-web-note code {
+  color: #9fb3c8;
+}
+
+.desktop-controls-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.desktop-controls-label {
+  font-size: 0.72rem;
+  color: #9fb3c8;
+}
+
+.desktop-controls-mode-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.35rem;
+}
+
+.desktop-controls-mode-btn {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cdd9e5;
+  padding: 0.35rem 0.3rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  text-transform: capitalize;
+  cursor: pointer;
+}
+
+.desktop-controls-mode-btn.active {
+  background: rgba(0, 120, 212, 0.25);
+  border-color: #0078d4;
+  color: #ffffff;
+}
+
+.desktop-controls-toggle {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #cdd9e5;
+  padding: 0.3rem 0.8rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.desktop-controls-toggle.active {
+  background: rgba(0, 120, 212, 0.25);
+  border-color: #0078d4;
+  color: #ffffff;
+}
+
+.desktop-controls-hotkey {
+  font-size: 0.68rem;
+  color: #6b7c93;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 0.25rem 0.4rem;
+  border-radius: 6px;
+  width: fit-content;
+}

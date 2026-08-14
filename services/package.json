@@ -1,0 +1,19 @@
+{
+  "name": "@muse/services",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Service abstractions for Memory, Microsoft 365 Copilot, Azure AI Foundry Voice, Conversation, and the Action Framework.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@muse/shared": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "typescript": "^5.6.3"
+  }
+}
