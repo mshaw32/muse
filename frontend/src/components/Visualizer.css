@@ -1,0 +1,113 @@
+.visualizer-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+  padding: 2.5rem 1.5rem;
+  min-height: 320px;
+}
+
+.visualizer-stage {
+  position: relative;
+  width: 220px;
+  height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visualizer-stage-inner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.visualizer-label {
+  font-size: 0.85rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+/* Idle / Alert / Error core */
+.visualizer-core {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+}
+
+.visualizer-core.small {
+  width: 36px;
+  height: 36px;
+  position: absolute;
+}
+
+/* Listening waveform */
+.visualizer-waveform {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 120px;
+}
+
+.waveform-bar {
+  width: 8px;
+  height: 90px;
+  border-radius: 6px;
+  transform-origin: center;
+}
+
+/* Thinking orbit */
+.visualizer-orbit {
+  position: relative;
+  width: 160px;
+  height: 160px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbit-ring {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 1px solid;
+}
+
+.orbit-track {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orbit-particle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+/* Speaking bars */
+.visualizer-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 6px;
+  height: 120px;
+}
+
+.audio-bar {
+  width: 10px;
+  height: 100px;
+  border-radius: 6px;
+  transform-origin: bottom;
+}

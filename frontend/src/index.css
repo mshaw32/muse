@@ -1,0 +1,45 @@
+:root {
+  color-scheme: dark;
+  --color-background: #050816;
+  --color-primary: #0078d4;
+  --color-thinking: #7a5af8;
+  --color-alert: #ffa62b;
+  --color-error: #ef4444;
+  --color-text: #e6f1ff;
+  font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Inter", system-ui,
+    sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at 20% 20%, #0a1330 0%, #050816 55%, #020310 100%);
+  color: var(--color-text);
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+.glass-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}

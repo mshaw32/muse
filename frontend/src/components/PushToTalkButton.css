@@ -1,0 +1,38 @@
+.push-to-talk-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.push-to-talk-button {
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(135deg, #0078d4, #00c6ff);
+  box-shadow: 0 0 24px rgba(0, 120, 212, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+}
+
+.push-to-talk-button .push-to-talk-icon {
+  font-size: 1.75rem;
+  color: #ffffff;
+}
+
+.push-to-talk-button.listening {
+  background: linear-gradient(135deg, #ef4444, #ff8a65);
+  box-shadow: 0 0 32px rgba(239, 68, 68, 0.6);
+}
+
+.push-to-talk-hint {
+  font-size: 0.8rem;
+  color: #9fb3c8;
+  letter-spacing: 0.03em;
+  margin: 0;
+}
