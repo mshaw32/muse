@@ -27,7 +27,7 @@
 .app-main {
   flex: 1;
   display: grid;
-  grid-template-columns: 260px minmax(280px, 1fr) minmax(320px, 1.1fr) 280px;
+  grid-template-columns: 260px minmax(280px, 1fr) minmax(320px, 1.1fr) minmax(360px, 1.3fr) 280px;
   gap: 1.5rem;
   align-items: start;
 }
@@ -45,6 +45,10 @@
 @media (max-width: 1400px) {
   .app-main {
     grid-template-columns: 240px minmax(280px, 1fr) minmax(320px, 1.1fr);
+  }
+
+  .app-column--copilot {
+    grid-column: 1 / -1;
   }
 
   .context-panel {

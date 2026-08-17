@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useWorkspaceStore } from "../../store/workspaceStore";
+import { useCopilotStore } from "../../store/copilotStore";
 import "./ContextPanel.css";
 
 export default function ContextPanel() {
@@ -9,6 +10,7 @@ export default function ContextPanel() {
   const recentFiles = useWorkspaceStore((state) => state.recentFiles);
   const actionResults = useWorkspaceStore((state) => state.actionResults);
   const refreshRecentFiles = useWorkspaceStore((state) => state.refreshRecentFiles);
+  const copilotSources = useCopilotStore((state) => state.sources);
 
   useEffect(() => {
     void refreshRecentFiles();
@@ -46,10 +48,21 @@ export default function ContextPanel() {
 
       <section className="context-section">
         <h3>Copilot Sources</h3>
-        <p className="context-empty">
-          Citations returned by Microsoft 365 Copilot Chat will appear here once a
-          question is asked.
-        </p>
+        {copilotSources.length === 0 ? (
+          <p className="context-empty">
+            Citations returned by Microsoft 365 Copilot Chat will appear here once a
+            question is asked.
+          </p>
+        ) : (
+          <ul className="context-tag-list">
+            {copilotSources.map((source) => (
+              <li key={source.id} className="context-tag">
+                {source.title}
+                <span className="context-tag-type">{source.type}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="context-section">

@@ -1,0 +1,58 @@
+.copilot-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #9fb3c8;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.copilot-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7c93;
+  display: inline-block;
+}
+
+.copilot-status--connected .copilot-status-dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+.copilot-status--disconnected .copilot-status-dot {
+  background: #6b7c93;
+}
+
+.copilot-status--authenticating .copilot-status-dot {
+  background: #ffa62b;
+  box-shadow: 0 0 8px rgba(255, 166, 43, 0.5);
+}
+
+.copilot-status--error .copilot-status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.copilot-status-label {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.copilot-status-action {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e6f1ff;
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.copilot-status-action:hover {
+  border-color: #0078d4;
+}

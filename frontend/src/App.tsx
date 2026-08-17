@@ -2,6 +2,7 @@ import Visualizer from "./components/Visualizer";
 import TranscriptPanel from "./components/TranscriptPanel";
 import PushToTalkButton from "./components/PushToTalkButton";
 import SettingsPanel from "./components/SettingsPanel";
+import CopilotPanel from "./components/CopilotPanel";
 import Sidebar from "./components/layout/Sidebar";
 import ContextPanel from "./components/layout/ContextPanel";
 import StatusBar from "./components/layout/StatusBar";
@@ -30,6 +31,10 @@ export default function App() {
         <section className="app-column app-column--secondary">
           <TranscriptPanel />
           <SettingsPanel />
+        </section>
+
+        <section className="app-column app-column--copilot">
+          <CopilotPanel />
         </section>
 
         <ContextPanel />
