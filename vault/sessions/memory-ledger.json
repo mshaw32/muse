@@ -1,0 +1,14 @@
+[
+  {
+    "id": "mem_msxnryftnwpzxoau",
+    "category": "decisions",
+    "title": "Smoke Test Entry",
+    "content": "Created by verify-phase2.sh",
+    "tags": [
+      "smoke-test"
+    ],
+    "source": "user",
+    "createdAt": "2026-08-17T20:00:34.841Z",
+    "updatedAt": "2026-08-17T20:00:34.841Z"
+  }
+]

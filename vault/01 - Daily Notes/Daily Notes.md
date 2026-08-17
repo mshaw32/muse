@@ -9,4 +9,6 @@ Append-only daily session logs.
 
 ## Notes in this folder
 
-- No mapped notes yet.
+Newest first.
+
+- [[08 - August 2026/2026-08-17|2026-08-17]] — MUSE Phase 1–3 recap, smoke tests, docs, and daily notes setup.

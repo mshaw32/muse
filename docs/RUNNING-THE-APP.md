@@ -107,7 +107,24 @@ If MUSE seems stuck in the tray with no visible window, click the tray icon
 to reopen it, or use **Exit** from the tray menu to fully terminate the app
 before restarting.
 
-## 4. Common troubleshooting
+## 4. Verifying it works (smoke tests)
+
+Once the backend (and optionally frontend) is running, you can confirm each
+phase's contracts still hold with the bundled smoke-test scripts:
+
+```bash
+npm run verify:phase1   # Phase 1 — core voice UI + placeholder endpoints
+npm run verify:phase2   # Phase 2 — Electron shell + service layer
+npm run verify:phase3   # Phase 3 — Copilot chat/retrieval/streaming
+npm run verify:all      # all three, in order
+```
+
+Each script prints pass/fail per check and exits non-zero if anything
+fails. Frontend-dependent checks are skipped automatically if
+`npm run dev` isn't running. See `docs/PROJECT-STATUS.md` for what each
+phase covers.
+
+## 5. Common troubleshooting
 
 | Symptom | Fix |
 |---|---|
@@ -117,7 +134,7 @@ before restarting.
 | Electron window won't reappear | Click the tray icon, or use tray menu → Exit and relaunch with `npm run electron`. |
 | Changes to `shared/` or `services/` not reflected | Re-run `npm run build:libs` (done automatically by `npm run backend`, `npm run dev:all`, and `npm run electron`). |
 
-## 5. Quick reference
+## 6. Quick reference
 
 ```bash
 npm install                # install all workspace dependencies (once, or after dependency changes)
@@ -125,6 +142,7 @@ npm run dev                # frontend only (http://localhost:5173)
 npm run backend            # backend only (http://localhost:4000)
 npm run dev:all            # backend + frontend together (recommended)
 npm run electron           # desktop app (run alongside `npm run dev:all`)
+npm run verify:all         # smoke-test all three phases
 ```
 
 To stop: **Ctrl+C** in the terminal(s) for web mode, or **tray icon → Exit**
