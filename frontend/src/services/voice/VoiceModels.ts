@@ -41,6 +41,19 @@ export interface VoiceStatusSnapshot {
   isMock: boolean;
   partialTranscript: VoiceTranscript | null;
   finalTranscript: VoiceTranscript | null;
+  /** Phase 4.1 — real Azure AI Foundry Voice provider status. */
+  provider?: "mock" | "foundry";
+  connectionState?: string;
+  authenticationMode?: string;
+  model?: string;
+  voiceProfile?: string;
+}
+
+export interface DiagnosticResult {
+  name: string;
+  passed: boolean;
+  message: string;
+  durationMs: number;
 }
 
 export interface VoiceProfile {

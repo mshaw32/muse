@@ -58,9 +58,16 @@ export class VoiceConfiguration {
   constructor(overrides: Partial<VoiceConfigurationValues> = {}) {
     // No real Azure AI Foundry Voice SDK credentials are configured yet in
     // this environment, so the mock provider is used unless explicitly
-    // overridden (e.g. once Phase 5 wires the real SDK, set
-    // MUSE_VOICE_USE_MOCK=false once credentials are available).
+    // overridden. Phase 4.1 adds `VOICE_PROVIDER=foundry`, which switches to
+    // the real Azure AI Foundry Voice provider authenticated via the
+    // signed-in Azure user (Entra ID / `az login`) rather than an API key —
+    // so `hasApiKey` below is one of two ways to opt into the real
+    // provider, `VOICE_PROVIDER=foundry` is the other (and the documented
+    // one; see docs/PHASE-4.1-FOUNDRY-VOICE-LIVE-BUILD-SPEC.md).
     const hasApiKey = Boolean(process.env.AZURE_AI_FOUNDRY_API_KEY || process.env.AZURE_VOICE_API_KEY);
+    const voiceProvider = (process.env.VOICE_PROVIDER ?? "").trim().toLowerCase();
+    const wantsFoundryProvider = voiceProvider === "foundry";
+    const wantsMockProvider = voiceProvider === "mock";
 
     this.values = {
       projectName: envOrDefault("AZURE_AI_FOUNDRY_PROJECT_NAME", DOCUMENTED_DEFAULTS.projectName),
@@ -74,7 +81,11 @@ export class VoiceConfiguration {
         "AZURE_APPLICATION_INSIGHTS_NAME",
         DOCUMENTED_DEFAULTS.applicationInsights,
       ),
-      useMockProvider: envBool("MUSE_VOICE_USE_MOCK", !hasApiKey),
+      useMockProvider: wantsFoundryProvider
+        ? false
+        : wantsMockProvider
+          ? true
+          : envBool("MUSE_VOICE_USE_MOCK", !hasApiKey),
       defaultVoiceProfileId: envOrDefault("MUSE_VOICE_DEFAULT_PROFILE", "muse-default"),
       defaultVolume: envNumber("MUSE_VOICE_DEFAULT_VOLUME", 0.8),
       ...overrides,

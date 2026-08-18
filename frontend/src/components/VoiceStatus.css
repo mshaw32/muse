@@ -58,3 +58,14 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
+
+.voice-status-foundry-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(66, 165, 245, 0.15);
+  color: #42a5f5;
+  border: 1px solid rgba(66, 165, 245, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

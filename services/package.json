@@ -10,7 +10,9 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
-    "@muse/shared": "*"
+    "@azure/identity": "^4.13.2",
+    "@muse/shared": "*",
+    "microsoft-cognitiveservices-speech-sdk": "^1.51.0"
   },
   "devDependencies": {
     "@types/node": "^22.9.0",

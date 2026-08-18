@@ -21,9 +21,11 @@ const STATUS_LABELS: Record<VoiceState, string> = {
 export interface VoiceStatusProps {
   state: VoiceState;
   isMock?: boolean;
+  provider?: "mock" | "foundry";
+  connectionState?: string;
 }
 
-export default function VoiceStatus({ state, isMock }: VoiceStatusProps) {
+export default function VoiceStatus({ state, isMock, provider, connectionState }: VoiceStatusProps) {
   const pulsing = state === "Listening" || state === "Processing" || state === "Speaking";
 
   return (
@@ -35,6 +37,11 @@ export default function VoiceStatus({ state, isMock }: VoiceStatusProps) {
       />
       <span className="voice-status-label">{STATUS_LABELS[state]}</span>
       {isMock && <span className="voice-status-mock-badge">Mock</span>}
+      {provider === "foundry" && (
+        <span className="voice-status-foundry-badge" title={`Connection: ${connectionState ?? "Unknown"}`}>
+          Azure AI Foundry
+        </span>
+      )}
     </div>
   );
 }

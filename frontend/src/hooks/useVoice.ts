@@ -34,6 +34,9 @@ export function useVoice() {
   const currentTranscript = useVoiceStore((state) => state.currentTranscript);
   const partialTranscript = useVoiceStore((state) => state.partialTranscript);
   const isMock = useVoiceStore((state) => state.isMock);
+  const provider = useVoiceStore((state) => state.provider);
+  const connectionState = useVoiceStore((state) => state.connectionState);
+  const authenticationMode = useVoiceStore((state) => state.authenticationMode);
   const error = useVoiceStore((state) => state.error);
   const voiceEnabled = useVoiceStore((state) => state.voiceEnabled);
 
@@ -43,6 +46,7 @@ export function useVoice() {
   const startListeningAction = useVoiceStore((state) => state.startListening);
   const stopListeningAction = useVoiceStore((state) => state.stopListening);
   const speakAction = useVoiceStore((state) => state.speak);
+  const refreshStatus = useVoiceStore((state) => state.refreshStatus);
 
   const setMuseState = useMuseStore((state) => state.setState);
   const addMessage = useMuseStore((state) => state.addMessage);
@@ -55,7 +59,10 @@ export function useVoice() {
 
   useEffect(() => {
     void loadDevices();
-  }, [loadDevices]);
+    // Phase 4.1 — load real provider/connection/auth status on mount so
+    // VoiceStatus reflects Azure AI Foundry connectivity immediately.
+    void refreshStatus();
+  }, [loadDevices, refreshStatus]);
 
   const startListening = useCallback(async () => {
     await startListeningAction();
@@ -92,6 +99,9 @@ export function useVoice() {
     currentTranscript,
     partialTranscript,
     isMock,
+    provider,
+    connectionState,
+    authenticationMode,
     error,
     startListening,
     stopListening,

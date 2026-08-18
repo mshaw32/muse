@@ -19,6 +19,8 @@ export default function VoicePanel() {
     voiceState,
     isListening,
     isMock,
+    provider,
+    connectionState,
     currentTranscript,
     partialTranscript,
     error,
@@ -32,7 +34,7 @@ export default function VoicePanel() {
     <div className="voice-panel glass-card">
       <div className="voice-panel-header">
         <h2>Voice</h2>
-        <VoiceStatus state={voiceState} isMock={isMock} />
+        <VoiceStatus state={voiceState} isMock={isMock} provider={provider} connectionState={connectionState} />
       </div>
 
       <div className="voice-panel-devices">

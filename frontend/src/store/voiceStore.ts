@@ -11,6 +11,8 @@
 
 import { create } from "zustand";
 import { voiceClient } from "../services/voice/VoiceClient";
+import { microphoneCapture } from "../services/voice/MicrophoneCapture";
+import { audioPlayback } from "../services/voice/AudioPlayback";
 import type { VoiceDevice, VoiceProfile, VoiceState, VoiceTranscript } from "../services/voice/VoiceModels";
 
 interface VoiceStore {
@@ -27,6 +29,10 @@ interface VoiceStore {
   isListening: boolean;
   isMock: boolean;
   error: string | null;
+  /** Phase 4.1 — real Azure AI Foundry Voice provider status fields. */
+  provider: "mock" | "foundry";
+  connectionState: string;
+  authenticationMode: string;
 
   setVoiceEnabled: (enabled: boolean) => void;
   loadDevices: () => Promise<void>;
@@ -59,6 +65,9 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
   isListening: false,
   isMock: true,
   error: null,
+  provider: "mock",
+  connectionState: "Disconnected",
+  authenticationMode: "unauthenticated",
 
   setVoiceEnabled: (enabled) => set({ voiceEnabled: enabled }),
 
@@ -105,12 +114,22 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
         error: null,
         ...mapSessionState(session.state),
       });
+
+      // Phase 4.1 — real microphone capture. When the backend is running
+      // against the mock provider, `/api/voice/audio` calls are harmless
+      // no-ops server-side; when running against Foundry, this streams
+      // real 16kHz PCM audio into the live Azure speech recognizer.
+      const micDeviceId = get().microphoneDevice?.id ?? null;
+      await microphoneCapture.start((base64Pcm) => {
+        void voiceClient.sendAudio(base64Pcm);
+      }, micDeviceId);
     } catch (error) {
       set({ voiceState: "Error", error: error instanceof Error ? error.message : "start_failed" });
     }
   },
 
   stopListening: async () => {
+    microphoneCapture.stop();
     try {
       const { session, transcript } = await voiceClient.stop();
       const finalTranscript = (transcript as VoiceTranscript | null) ?? null;
@@ -130,7 +149,11 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
   speak: async (text, voiceProfileId) => {
     set({ voiceState: "Speaking", isSpeaking: true });
     try {
-      await voiceClient.speak(text, voiceProfileId);
+      const response = await voiceClient.speak(text, voiceProfileId);
+      // Phase 4.1 — real speaker playback of the synthesized audio (mock
+      // provider returns a near-silent WAV, so this is safe either way).
+      const speakerId = get().speakerDevice?.id ?? null;
+      await audioPlayback.play(response.result.audioBase64, response.result.mimeType, speakerId);
     } catch (error) {
       set({ error: error instanceof Error ? error.message : "speak_failed" });
     } finally {
@@ -146,6 +169,9 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
         microphoneDevice: status.microphone,
         speakerDevice: status.speaker,
         isMock: status.isMock,
+        provider: status.provider ?? "mock",
+        connectionState: status.connectionState ?? "Disconnected",
+        authenticationMode: status.authenticationMode ?? "unauthenticated",
         partialTranscript: status.partialTranscript?.text ?? "",
         currentTranscript: status.finalTranscript?.text ?? get().currentTranscript,
         ...mapSessionState(status.session?.state ?? "Idle"),

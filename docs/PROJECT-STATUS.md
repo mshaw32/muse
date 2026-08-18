@@ -1,6 +1,6 @@
 # MUSE — Project Status & Architecture
 
-_Last updated: 2026-08-17 (Phase 4)_
+_Last updated: 2026-08-18 (Phase 4.1)_
 
 This document summarizes the current state of MUSE: what's built, how it's
 architected, and what's still to come. See also `RUNNING-THE-APP.md` for
@@ -177,25 +177,63 @@ npm workspaces tie these five packages together (`shared`, `services`,
   Planner actions, Teams actions, and any change to the Copilot
   abstraction layer.
 
+### Phase 4.1 — Real Azure AI Foundry Voice (live, not mocked)
+- New `services/src/voice/foundry/` module: `FoundryTokenProvider`
+  (Entra ID auth via `DefaultAzureCredential` → `AzureCliCredential`
+  fallback — **no API keys, app registrations, client secrets, or service
+  principals**), `FoundryVoiceConfiguration` (endpoint/region/model/voice
+  resolution + `VOICE_PROVIDER` switch), `FoundryVoiceLiveClient`
+  (connection state machine + `SpeechConfig` factory using an
+  authorization token), `FoundrySpeechToText` / `FoundryTextToSpeech`
+  (real implementations of the existing `SpeechToTextEngine` /
+  `TextToSpeechEngine` interfaces — unchanged contracts), `VoiceDiagnostics`
+  (`testAuthentication`, `testConnectivity`, `testSpeechToText`,
+  `testTextToSpeech`, `runAll`), `FoundryVoiceLogger`.
+- `VoiceConfiguration`/`VoiceService` extended (additively) to select
+  between the Phase 4 mock engines and the new real Foundry engines based
+  on `VOICE_PROVIDER=mock|foundry` (defaults to `mock` — zero behavior
+  change unless explicitly configured).
+- Backend: `AzureVoiceService.feedAudio()/getFoundryStatus()/
+  runDiagnostics()`; new routes `POST /api/voice/audio` (feeds real
+  microphone PCM into the active Foundry recognition session) and
+  `GET /api/voice/diagnostics`; `/status` enriched with `provider`,
+  `connectionState`, `authenticationMode`, `model`, `voiceProfile`.
+- Frontend: `MicrophoneCapture.ts` (real `getUserMedia` capture,
+  downsampled to 16kHz/16-bit/mono PCM, streamed to the backend) and
+  `AudioPlayback.ts` (real `<audio>` playback of synthesized speech, with
+  `setSinkId` speaker routing) — wired into `voiceStore.ts`'s
+  `startListening`/`stopListening`/`speak` actions. `VoiceStatus`,
+  `VoicePanel`, and `useVoice` extended to surface the new provider/
+  connection/auth fields (an "Azure AI Foundry" badge appears when the
+  real provider is active).
+- Electron: `session.setPermissionRequestHandler` added in `main.ts` so
+  the renderer's `getUserMedia` microphone requests are auto-granted.
+- **Live-verified against the real Azure resource** (`mbgsol-muse-dev-resource`,
+  `rg-mbgsol-muse-dev`): running the backend with `VOICE_PROVIDER=foundry`
+  and calling `GET /api/voice/diagnostics` returns all four checks passing
+  — real Entra ID authentication, a real connection, a real speech-to-text
+  session, and real synthesized speech — with zero API keys involved.
+- Not yet done: a full manual push-to-talk walkthrough in the packaged
+  Electron app (speaking into a real mic end-to-end) — the automated
+  diagnostics/smoke tests cover the pipeline, but a human sanity check is
+  still recommended.
+
 ## What's mocked (by explicit design, not a gap)
 
 These are intentionally mocked per the Phase 2/3/4 build specs, pending real
 credentials/API access:
 - Microsoft 365 Copilot Chat/Retrieval APIs (real Copilot API access not
   yet available — mock returns realistic, structurally-correct payloads).
-- Azure AI Foundry Voice (mock STT/TTS + device list via
-  `MockVoiceProvider`; `VoiceConfiguration.isMockProvider()` returns `true`
-  until real Azure AI Foundry Voice credentials are configured via
-  environment variables).
+- Azure AI Foundry Voice — **real as of Phase 4.1** when
+  `VOICE_PROVIDER=foundry` is set (requires `az login`); still defaults to
+  `MockVoiceProvider` (`VOICE_PROVIDER` unset or `mock`) so existing dev
+  workflows are unaffected.
 - Copilot auth (mock login/logout/status; no real MSAL/OAuth flow yet).
 
 ## What's still to be built
 
 - Real Microsoft 365 Copilot Chat/Retrieval API integration (replacing the
   mock service implementations with actual authenticated calls).
-- Real Azure AI Foundry Voice Live SDK integration (Phase 5, per the Phase
-  4 spec), replacing `MockVoiceProvider` with real STT/TTS/session
-  streaming once Azure credentials are available.
 - Copilot + Voice end-to-end conversation loop (Phase 6, per the Phase 4
   spec).
 - Real authentication (MSAL / Entra ID) for Copilot access, replacing the
@@ -206,14 +244,24 @@ credentials/API access:
   scope through Phase 4).
 - Expanded Action Framework plugins beyond the current mock set.
 - Packaging/distribution for the Electron app (installers, auto-update).
+- A full manual, human-in-the-loop push-to-talk test of the real Azure
+  voice pipeline in the packaged Electron app (mic → real transcript →
+  real TTS → speakers).
 
 ## Verifying the current build
 
 ```bash
 npm install
-npm run backend     # terminal 1
+npm run backend     # terminal 1 (mock voice provider, default)
 npm run dev          # terminal 2 (optional, enables frontend checks below)
-npm run verify:all   # runs phase 1 + 2 + 3 + 4 smoke tests
+npm run verify:all   # runs phase 1 + 2 + 3 + 4 + 4.1 smoke tests
+```
+
+To exercise the real Azure AI Foundry Voice pipeline (requires `az login`):
+
+```bash
+VOICE_PROVIDER=foundry npm run backend
+npm run verify:phase4.1   # asserts all 4 diagnostics pass against real Azure
 ```
 
 See `RUNNING-THE-APP.md` for full run/stop instructions and troubleshooting.

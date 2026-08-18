@@ -26,6 +26,10 @@ import {
   VoiceSessionInfo,
   VoiceStatusSnapshot,
 } from "./VoiceModels";
+import { FoundrySpeechToText } from "./foundry/FoundrySpeechToText";
+import { FoundryTextToSpeech } from "./foundry/FoundryTextToSpeech";
+import { FoundryVoiceConfiguration } from "./foundry/FoundryVoiceConfiguration";
+import { voiceDiagnostics, VoiceDiagnostics } from "./foundry/VoiceDiagnostics";
 
 export class VoiceService {
   private readonly stt: SpeechToTextEngine;
@@ -44,23 +48,56 @@ export class VoiceService {
   readonly stt4: SpeechToTextService;
   readonly tts4: TextToSpeechService;
 
+  // Phase 4.1 — real Azure AI Foundry Voice provider, resolved from
+  // `VOICE_PROVIDER`/`FoundryVoiceConfiguration`. `foundryStt`/`foundryTts`
+  // are only constructed when the "foundry" provider is selected; the mock
+  // engines above remain fully functional and untouched when it is not.
+  readonly foundryConfig: FoundryVoiceConfiguration;
+  readonly diagnostics: VoiceDiagnostics;
+  private readonly foundryStt: FoundrySpeechToText | null;
+  private readonly foundryTts: FoundryTextToSpeech | null;
+
   constructor(
-    stt: SpeechToTextEngine = new MockSpeechToText(),
-    tts: TextToSpeechEngine = new MockTextToSpeech(),
+    stt?: SpeechToTextEngine,
+    tts?: TextToSpeechEngine,
     logger: Logger = new Logger("muse:voice"),
     config: VoiceConfiguration = new VoiceConfiguration(),
+    foundryConfig: FoundryVoiceConfiguration = new FoundryVoiceConfiguration(),
   ) {
-    this.stt = stt;
-    this.tts = tts;
-    this.audio = new AudioManager();
     this.logger = logger;
-
     this.config = config;
+    this.foundryConfig = foundryConfig;
+    this.diagnostics = voiceDiagnostics;
+
+    const useFoundry = this.foundryConfig.isFoundryProvider() && !this.config.isMockProvider();
+    this.foundryStt = useFoundry ? new FoundrySpeechToText() : null;
+    this.foundryTts = useFoundry ? new FoundryTextToSpeech() : null;
+
+    // Explicit stt/tts arguments (used by tests) always win; otherwise the
+    // resolved provider (foundry when configured, mock by default) is used.
+    this.stt = stt ?? this.foundryStt ?? new MockSpeechToText();
+    this.tts = tts ?? this.foundryTts ?? new MockTextToSpeech();
+    this.audio = new AudioManager();
+
     const configValues = config.getValues();
     this.session = new VoiceSessionService();
     this.devices = new AudioDeviceService(this.audio);
-    this.stt4 = new SpeechToTextService(stt);
-    this.tts4 = new TextToSpeechService(tts, configValues.defaultVolume, configValues.defaultVoiceProfileId);
+    this.stt4 = new SpeechToTextService(this.stt);
+    this.tts4 = new TextToSpeechService(this.tts, configValues.defaultVolume, configValues.defaultVoiceProfileId);
+  }
+
+  /** True when the real Azure AI Foundry Voice provider (not the mock) is active. */
+  isFoundryProvider(): boolean {
+    return this.foundryStt !== null;
+  }
+
+  /**
+   * Feeds raw 16kHz/16-bit/mono PCM audio (captured from the real
+   * microphone in the renderer/Electron process) into the active Foundry
+   * speech-to-text session. No-ops when the mock provider is active.
+   */
+  feedAudio(pcmChunk: Buffer | ArrayBuffer): void {
+    this.foundryStt?.feedAudio(pcmChunk);
   }
 
   /**
@@ -157,3 +194,4 @@ export class VoiceService {
 }
 
 export * from "./VoiceModels";
+export * from "./foundry";

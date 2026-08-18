@@ -11,10 +11,18 @@
  * behaves identically today and once real Azure connectivity lands.
  */
 
-import { VoiceService, VoiceStatusSnapshot, VoiceTranscript } from "@muse/services";
+import { VoiceService, VoiceStatusSnapshot, VoiceTranscript, voiceDiagnostics } from "@muse/services";
 
 export interface StartSessionResult {
   session: ReturnType<VoiceService["session"]["getActiveSession"]>;
+}
+
+export interface FoundryStatus {
+  provider: "mock" | "foundry";
+  connectionState: string;
+  authenticationMode: string;
+  model: string;
+  voiceProfile: string;
 }
 
 export class AzureVoiceService {
@@ -28,6 +36,11 @@ export class AzureVoiceService {
 
   isMock(): boolean {
     return this.voice.config.isMockProvider();
+  }
+
+  /** Feeds real microphone PCM audio (captured client-side) into the active Foundry STT session. */
+  feedAudio(pcmChunk: Buffer): void {
+    this.voice.feedAudio(pcmChunk);
   }
 
   start(): StartSessionResult {
@@ -55,6 +68,22 @@ export class AzureVoiceService {
 
   getStatus(): VoiceStatusSnapshot {
     return this.voice.getStatus();
+  }
+
+  /** Phase 4.1 — extended provider/connection/authentication status. */
+  getFoundryStatus(): FoundryStatus {
+    const config = voiceDiagnostics.getConfiguration();
+    return {
+      provider: config.provider,
+      connectionState: config.connectionState,
+      authenticationMode: config.authenticationMode,
+      model: config.model,
+      voiceProfile: config.voiceProfile,
+    };
+  }
+
+  async runDiagnostics() {
+    return voiceDiagnostics.runAll();
   }
 
   getLastTranscript(): VoiceTranscript | null {

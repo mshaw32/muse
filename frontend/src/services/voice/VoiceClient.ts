@@ -3,7 +3,13 @@
  * routes. Wraps plain `fetch` calls (routed through the Vite dev proxy).
  */
 
-import type { VoiceDevice, VoiceProfile, VoiceSessionSnapshot, VoiceStatusSnapshot } from "./VoiceModels";
+import type {
+  DiagnosticResult,
+  VoiceDevice,
+  VoiceProfile,
+  VoiceSessionSnapshot,
+  VoiceStatusSnapshot,
+} from "./VoiceModels";
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
@@ -64,4 +70,17 @@ export const voiceClient = {
       method: "POST",
       body: JSON.stringify({ deviceId }),
     }),
+
+  /** Phase 4.1 — streams a chunk of real microphone PCM audio to the active Foundry STT session. */
+  sendAudio: (audioBase64: string) =>
+    request<{ status: string }>("/api/voice/audio", {
+      method: "POST",
+      body: JSON.stringify({ audioBase64 }),
+    }),
+
+  /** Phase 4.1 — runs testAuthentication/testConnectivity/testSpeechToText/testTextToSpeech. */
+  diagnostics: () =>
+    request<{ status: string; results: DiagnosticResult[]; configuration: Record<string, unknown> }>(
+      "/api/voice/diagnostics",
+    ),
 };

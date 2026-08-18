@@ -111,17 +111,58 @@ router.post("/speak", async (req: Request, res: Response) => {
  * GET /api/voice/status
  * Reports the current voice session/device/provider status, plus any
  * partial or final transcript captured since the last poll, for the
- * frontend `VoiceStatus`/`VoicePanel` components.
+ * frontend `VoiceStatus`/`VoicePanel` components. Phase 4.1 adds provider,
+ * connection state, authentication mode, and selected model/voice.
  */
 router.get("/status", (_req: Request, res: Response) => {
   const voiceIntegration = getVoiceIntegration().azureVoice;
   const status = voiceIntegration.getStatus();
+  const foundryStatus = voiceIntegration.getFoundryStatus();
   res.json({
     status: "ok",
     ...status,
+    ...foundryStatus,
     partialTranscript: voiceIntegration.getPartialTranscript(),
     finalTranscript: voiceIntegration.getLastTranscript(),
   });
+});
+
+/**
+ * POST /api/voice/audio
+ * Phase 4.1 — accepts a chunk of real microphone PCM audio (base64-encoded
+ * 16kHz/16-bit/mono), captured client-side via `getUserMedia`, and feeds it
+ * into the active Azure AI Foundry speech-to-text session. No-ops (but
+ * still returns 200) when the mock provider is active, so the frontend
+ * doesn't need to branch on provider type.
+ */
+router.post("/audio", (req: Request, res: Response) => {
+  const { audioBase64 } = req.body ?? {};
+  if (typeof audioBase64 !== "string" || audioBase64.length === 0) {
+    res.status(400).json({ status: "error", message: "\"audioBase64\" is required." });
+    return;
+  }
+  try {
+    getVoiceIntegration().azureVoice.feedAudio(Buffer.from(audioBase64, "base64"));
+    res.json({ status: "ok" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error instanceof Error ? error.message : "audio_failed" });
+  }
+});
+
+/**
+ * GET /api/voice/diagnostics
+ * Phase 4.1 — runs testAuthentication/testConnectivity/testSpeechToText/
+ * testTextToSpeech against the configured Azure AI Foundry Voice provider
+ * and returns a combined report plus the active configuration. Useful for
+ * troubleshooting `az login`/connectivity issues.
+ */
+router.get("/diagnostics", async (_req: Request, res: Response) => {
+  try {
+    const report = await getVoiceIntegration().azureVoice.runDiagnostics();
+    res.json({ status: "ok", ...report });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error instanceof Error ? error.message : "diagnostics_failed" });
+  }
 });
 
 /**

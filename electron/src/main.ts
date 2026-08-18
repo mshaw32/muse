@@ -6,7 +6,7 @@
  * preferences without direct Node/Electron access.
  */
 
-import { app, ipcMain } from "electron";
+import { app, ipcMain, session } from "electron";
 import { Logger, SettingsService, SettingsStore, WindowMode } from "@muse/shared";
 import { getSettingsDirectory } from "./config";
 import { WindowManager } from "./windowManager";
@@ -26,6 +26,17 @@ if (!gotSingleInstanceLock) {
 let isQuitting = false;
 
 app.whenReady().then(() => {
+  // Phase 4.1 — real Azure AI Foundry Voice requires genuine microphone
+  // access via getUserMedia in the renderer. Grant media permission
+  // requests automatically since MUSE is a trusted, single-purpose app.
+  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+    if (permission === "media") {
+      callback(true);
+      return;
+    }
+    callback(false);
+  });
+
   const settingsService = new SettingsService(new SettingsStore(getSettingsDirectory()));
   const windowManager = new WindowManager();
 
