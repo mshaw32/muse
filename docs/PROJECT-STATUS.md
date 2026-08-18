@@ -1,6 +1,6 @@
 # MUSE — Project Status & Architecture
 
-_Last updated: 2026-08-17_
+_Last updated: 2026-08-17 (Phase 4)_
 
 This document summarizes the current state of MUSE: what's built, how it's
 architected, and what's still to come. See also `RUNNING-THE-APP.md` for
@@ -35,21 +35,25 @@ system tray and global hotkeys.
 │  components/  (Visualizer, TranscriptPanel, PushToTalkButton,      │
 │                SettingsPanel, layout/{Sidebar,ContextPanel,        │
 │                StatusBar}, ChatInput, SourcePanel, CopilotStatus,  │
-│                CopilotPanel)                                       │
-│  store/       Zustand: museStore.ts, copilotStore.ts               │
-│  hooks/       useElectronBridge.ts, useCopilot.ts                  │
+│                CopilotPanel, VoicePanel, MicrophoneSelector,       │
+│                SpeakerSelector, VoiceStatus)                        │
+│  store/       Zustand: museStore.ts, copilotStore.ts, voiceStore.ts │
+│  hooks/       useElectronBridge.ts, useCopilot.ts, useVoice.ts      │
 │  services/copilot/CopilotClient.ts  (fetch + SSE streaming client) │
-│  Framer Motion drives all visualizer state animations              │
+│  services/voice/VoiceClient.ts      (fetch client for /api/voice/*) │
+│  Framer Motion drives all visualizer state animations               │
 └───────────────────────────────────────────────────────────────────┘
               │ HTTP/SSE (localhost:4000, proxied via Vite in dev)
               ▼
 ┌───────────────────────────────────────────────────────────────────┐
 │ Backend (backend/) — Express + TypeScript (ts-node-dev)           │
-│  routes/  health.ts, session.ts, memory.ts, voice.ts,              │
+│  routes/  health.ts, session.ts, memory.ts, voice.ts,               │
 │           vaultSearch.ts (Phase 1 placeholder), actions.ts,        │
 │           copilot.ts (auth, chat, chat/stream, retrieve,           │
-│                       conversation/*)                              │
-│  services/copilot/  wraps services/src/copilot for HTTP use        │
+│                       conversation/*)                               │
+│  services/copilot/  wraps services/src/copilot for HTTP use         │
+│  services/voice/    wraps services/src/voice for HTTP use           │
+│                      (AzureVoiceService, VoiceSessionManager)       │
 └───────────────────────────────────────────────────────────────────┘
               │ imports (npm workspaces)
               ▼
@@ -60,7 +64,12 @@ system tray and global hotkeys.
 │                 (all mock implementations — see "Mocked" below)    │
 │  memory/        Local Memory Vault (store/search)                  │
 │  actions/       Action Framework + plugins/ (human-approval gate)   │
-│  voice/         Azure AI Foundry Voice service (mock TTS/devices)   │
+│  voice/         Azure AI Foundry Voice abstraction layer:           │
+│                 VoiceService (facade), VoiceConfiguration (env/     │
+│                 azure-resources.md config), VoiceSessionService,    │
+│                 SpeechToTextService, TextToSpeechService,           │
+│                 AudioDeviceService, MockVoiceProvider, VoiceLogger   │
+│                 (mock-backed pending real Azure AI Foundry Voice)   │
 │  conversation/  Conversation lifecycle used by copilot/             │
 └───────────────────────────────────────────────────────────────────┘
               │ imports
@@ -124,33 +133,77 @@ npm workspaces tie these five packages together (`shared`, `services`,
 - `scripts/smoke-test-common.sh` — shared bash assertion helpers used by
   all phase scripts.
 - `scripts/verify-phase1.sh`, `scripts/verify-phase2.sh`,
-  `scripts/verify-phase3.sh` — black-box smoke tests hitting the live
-  backend (and optionally the live frontend dev server) to confirm each
-  phase's contracts still hold. Wired up as `npm run verify:phase1`,
-  `verify:phase2`, `verify:phase3`, and `verify:all`.
+  `scripts/verify-phase3.sh`, `scripts/verify-phase4.sh` — black-box smoke
+  tests hitting the live backend (and optionally the live frontend dev
+  server) to confirm each phase's contracts still hold. Wired up as
+  `npm run verify:phase1`, `verify:phase2`, `verify:phase3`,
+  `verify:phase4`, and `verify:all`.
+
+### Phase 4 — Azure AI Foundry Voice integration
+- `VoiceConfiguration` — loads Azure AI Foundry Voice project/resource
+  identifiers from environment variables, falling back to the documented
+  values in `docs/azure-resources.md` (no hardcoded secrets/resources);
+  resolves mock-vs-real provider selection.
+- `VoiceSessionService` — realtime voice session lifecycle (start / stop /
+  pause / resume) using the spec's 6-state model: Idle, Listening,
+  Processing, Speaking, Disconnected, Error.
+- `SpeechToTextService` — start/stop listening with partial/final
+  transcript and error event callbacks.
+- `TextToSpeechService` — generate/stream/cancel speech synthesis, volume
+  control, voice selection.
+- `AudioDeviceService` — microphone/speaker listing, default-device
+  lookup, selection, and persistence.
+- `MockVoiceProvider` — bundles all of the above mock engines so the full
+  voice stack is testable without any Azure connectivity.
+- `VoiceLogger` — structured logging for session/transcript/speech/device/
+  error events (mirrors `CopilotLogger`'s convention).
+- Backend: `AzureVoiceService` + `VoiceSessionManager`
+  (`backend/src/services/voice/`) plus new routes in
+  `backend/src/routes/voice.ts`: `POST /api/voice/start`, `/stop`,
+  `/speak`, `GET /status`, `POST /devices/microphone`, `/devices/speaker`,
+  `GET /sessions/history` — all added alongside the untouched Phase 1/2/3
+  `POST /api/voice`, `/synthesize`, `GET /devices` contracts.
+- Frontend: `VoicePanel`, `MicrophoneSelector`, `SpeakerSelector`,
+  `VoiceStatus` components; `voiceStore.ts` (Zustand); `useVoice.ts` hook
+  bridging voice state onto the existing Visualizer (`museStore.museState`)
+  and Transcript Panel (`museStore.addMessage`) without modifying either;
+  `VoiceClient.ts` service.
+- `PushToTalkButton` rewired to drive the real (mock-backed) voice session
+  flow instead of the earlier `setTimeout` simulation; the existing global
+  Electron hotkey now also triggers `voiceStore.startListening()`.
+- New settings: Voice Enabled, Auto Start Listening, Push-To-Talk Enabled
+  (added to `SettingsPanel` and `VoiceSettingsConfig`).
+- Explicitly **not** implemented in Phase 4 (per spec): Outlook actions,
+  Planner actions, Teams actions, and any change to the Copilot
+  abstraction layer.
 
 ## What's mocked (by explicit design, not a gap)
 
-These are intentionally mocked per the Phase 2/3 build specs, pending real
+These are intentionally mocked per the Phase 2/3/4 build specs, pending real
 credentials/API access:
 - Microsoft 365 Copilot Chat/Retrieval APIs (real Copilot API access not
   yet available — mock returns realistic, structurally-correct payloads).
-- Azure AI Foundry Voice (mock TTS + device list; no real Azure Speech
-  calls yet).
+- Azure AI Foundry Voice (mock STT/TTS + device list via
+  `MockVoiceProvider`; `VoiceConfiguration.isMockProvider()` returns `true`
+  until real Azure AI Foundry Voice credentials are configured via
+  environment variables).
 - Copilot auth (mock login/logout/status; no real MSAL/OAuth flow yet).
 
 ## What's still to be built
 
 - Real Microsoft 365 Copilot Chat/Retrieval API integration (replacing the
   mock service implementations with actual authenticated calls).
-- Real Azure AI Foundry Voice integration (STT/TTS), replacing the mock
-  voice service.
+- Real Azure AI Foundry Voice Live SDK integration (Phase 5, per the Phase
+  4 spec), replacing `MockVoiceProvider` with real STT/TTS/session
+  streaming once Azure credentials are available.
+- Copilot + Voice end-to-end conversation loop (Phase 6, per the Phase 4
+  spec).
 - Real authentication (MSAL / Entra ID) for Copilot access, replacing the
   mock auth service.
-- Microsoft Graph-based crawlers (explicitly out of scope for Phases 1–3;
-  first candidate for a future phase).
-- Outlook, SharePoint, and Planner integrations (explicitly out of scope
-  through Phase 3).
+- Microsoft Graph-based crawlers (explicitly out of scope through
+  Phase 4; first candidate for a future phase).
+- Outlook, SharePoint, Planner, and Teams integrations (explicitly out of
+  scope through Phase 4).
 - Expanded Action Framework plugins beyond the current mock set.
 - Packaging/distribution for the Electron app (installers, auto-update).
 
@@ -160,7 +213,7 @@ credentials/API access:
 npm install
 npm run backend     # terminal 1
 npm run dev          # terminal 2 (optional, enables frontend checks below)
-npm run verify:all   # runs phase 1 + 2 + 3 smoke tests
+npm run verify:all   # runs phase 1 + 2 + 3 + 4 smoke tests
 ```
 
 See `RUNNING-THE-APP.md` for full run/stop instructions and troubleshooting.

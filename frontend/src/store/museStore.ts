@@ -33,6 +33,8 @@ export const useMuseStore = create<MuseStore>((set) => ({
     wakeWordEnabled: false,
     volume: 0.8,
     theme: "dark",
+    autoStartListening: false,
+    pushToTalkEnabled: true,
   },
   sessionId: generateSessionId(),
 

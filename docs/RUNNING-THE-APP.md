@@ -116,7 +116,8 @@ phase's contracts still hold with the bundled smoke-test scripts:
 npm run verify:phase1   # Phase 1 — core voice UI + placeholder endpoints
 npm run verify:phase2   # Phase 2 — Electron shell + service layer
 npm run verify:phase3   # Phase 3 — Copilot chat/retrieval/streaming
-npm run verify:all      # all three, in order
+npm run verify:phase4   # Phase 4 — Azure AI Foundry Voice integration
+npm run verify:all      # all four, in order
 ```
 
 Each script prints pass/fail per check and exits non-zero if anything
@@ -142,7 +143,7 @@ npm run dev                # frontend only (http://localhost:5173)
 npm run backend            # backend only (http://localhost:4000)
 npm run dev:all            # backend + frontend together (recommended)
 npm run electron           # desktop app (run alongside `npm run dev:all`)
-npm run verify:all         # smoke-test all three phases
+npm run verify:all         # smoke-test all four phases
 ```
 
 To stop: **Ctrl+C** in the terminal(s) for web mode, or **tray icon → Exit**

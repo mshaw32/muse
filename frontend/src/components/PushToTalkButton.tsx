@@ -1,46 +1,40 @@
 import { useCallback, useRef } from "react";
 import { motion } from "framer-motion";
-import { useMuseStore } from "../store/museStore";
+import { useVoice } from "../hooks/useVoice";
 import "./PushToTalkButton.css";
 
 export default function PushToTalkButton() {
-  const museState = useMuseStore((state) => state.museState);
-  const setState = useMuseStore((state) => state.setState);
-  const addMessage = useMuseStore((state) => state.addMessage);
-  const isListening = museState === "listening";
+  const { voiceState, isListening, startListening, stopListening, speak } = useVoice();
   const wasListeningRef = useRef(false);
 
-  const startListening = useCallback(() => {
-    if (museState === "error") return;
+  const handleStart = useCallback(() => {
+    if (voiceState === "Error") return;
     wasListeningRef.current = true;
-    setState("listening");
-  }, [museState, setState]);
+    void startListening();
+  }, [voiceState, startListening]);
 
-  const stopListening = useCallback(() => {
+  const handleStop = useCallback(() => {
     if (!wasListeningRef.current) return;
     wasListeningRef.current = false;
-    // Simulate hand-off to "thinking" once the user releases the button.
-    setState("thinking");
-    addMessage("user", "(voice input captured)");
 
-    window.setTimeout(() => {
-      setState("speaking");
-      addMessage("assistant", "This is a placeholder MUSE response.");
-    }, 1200);
-
-    window.setTimeout(() => {
-      setState("idle");
-    }, 3200);
-  }, [addMessage, setState]);
+    void (async () => {
+      const transcript = await stopListening();
+      if (transcript && transcript.text.trim().length > 0) {
+        // Phase 4: real (mock) voice-generated response, spoken back via the
+        // Azure AI Foundry Voice text-to-speech pipeline.
+        await speak(`I heard: "${transcript.text}"`);
+      }
+    })();
+  }, [stopListening, speak]);
 
   return (
     <div className="push-to-talk-wrapper">
       <motion.button
         type="button"
         className={`push-to-talk-button${isListening ? " listening" : ""}`}
-        onPointerDown={startListening}
-        onPointerUp={stopListening}
-        onPointerLeave={stopListening}
+        onPointerDown={handleStart}
+        onPointerUp={handleStop}
+        onPointerLeave={handleStop}
         whileTap={{ scale: 0.94 }}
         animate={isListening ? { scale: [1, 1.05, 1] } : { scale: 1 }}
         transition={{ duration: 0.6, repeat: isListening ? Infinity : 0 }}

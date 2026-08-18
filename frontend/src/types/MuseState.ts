@@ -18,4 +18,7 @@ export interface MuseSettings {
   wakeWordEnabled: boolean;
   volume: number;
   theme: "dark" | "light";
+  /** Phase 4 additions — persisted alongside the existing voice settings above. */
+  autoStartListening: boolean;
+  pushToTalkEnabled: boolean;
 }

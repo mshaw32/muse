@@ -21,7 +21,8 @@
     "verify:phase1": "bash ./scripts/verify-phase1.sh",
     "verify:phase2": "bash ./scripts/verify-phase2.sh",
     "verify:phase3": "bash ./scripts/verify-phase3.sh",
-    "verify:all": "bash ./scripts/verify-phase1.sh && bash ./scripts/verify-phase2.sh && bash ./scripts/verify-phase3.sh"
+    "verify:phase4": "bash ./scripts/verify-phase4.sh",
+    "verify:all": "bash ./scripts/verify-phase1.sh && bash ./scripts/verify-phase2.sh && bash ./scripts/verify-phase3.sh && bash ./scripts/verify-phase4.sh"
   },
   "devDependencies": {
     "concurrently": "^9.0.1",

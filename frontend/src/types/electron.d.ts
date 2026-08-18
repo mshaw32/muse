@@ -14,12 +14,14 @@ export interface MuseDesktopSettings {
   startupMode: "manual" | "launch-at-login";
   hotkeys: { toggleMuse: string };
   voice: {
+    voiceEnabled: boolean;
     inputDeviceId: string | null;
     outputDeviceId: string | null;
     voiceProfile: string;
     volume: number;
     wakeWordEnabled: boolean;
     pushToTalkEnabled: boolean;
+    autoStartListening: boolean;
   };
   memory: {
     autoStoreConversationSummaries: boolean;

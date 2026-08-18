@@ -15,12 +15,16 @@ export interface HotkeySettings {
 }
 
 export interface VoiceSettingsConfig {
+  /** Phase 4: master toggle for the voice layer. */
+  voiceEnabled: boolean;
   inputDeviceId: string | null;
   outputDeviceId: string | null;
   voiceProfile: string;
   volume: number;
   wakeWordEnabled: boolean;
   pushToTalkEnabled: boolean;
+  /** Phase 4: automatically begin listening when a voice session starts. */
+  autoStartListening: boolean;
 }
 
 export interface MemoryPreferences {
@@ -59,12 +63,14 @@ export const DEFAULT_SETTINGS: MuseSettings = {
     toggleMuse: "CommandOrControl+Shift+Space",
   },
   voice: {
+    voiceEnabled: true,
     inputDeviceId: null,
     outputDeviceId: null,
     voiceProfile: "muse-default",
     volume: 0.8,
     wakeWordEnabled: false,
     pushToTalkEnabled: true,
+    autoStartListening: false,
   },
   memory: {
     autoStoreConversationSummaries: true,

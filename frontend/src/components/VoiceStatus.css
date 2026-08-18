@@ -1,0 +1,60 @@
+.voice-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.78rem;
+  color: #9fb3c8;
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.voice-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #6b7c93;
+  display: inline-block;
+}
+
+.voice-status--idle .voice-status-dot {
+  background: #6b7c93;
+}
+
+.voice-status--listening .voice-status-dot,
+.voice-status--speaking .voice-status-dot {
+  background: #0078d4;
+  box-shadow: 0 0 8px rgba(0, 120, 212, 0.6);
+}
+
+.voice-status--processing .voice-status-dot {
+  background: #7a5af8;
+  box-shadow: 0 0 8px rgba(122, 90, 248, 0.6);
+}
+
+.voice-status--disconnected .voice-status-dot {
+  background: #ffa62b;
+  box-shadow: 0 0 8px rgba(255, 166, 43, 0.5);
+}
+
+.voice-status--error .voice-status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+}
+
+.voice-status-label {
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+
+.voice-status-mock-badge {
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 6px;
+  background: rgba(255, 166, 43, 0.15);
+  color: #ffa62b;
+  border: 1px solid rgba(255, 166, 43, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}

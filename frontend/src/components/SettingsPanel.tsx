@@ -47,6 +47,30 @@ export default function SettingsPanel() {
         />
       </div>
 
+      <div className="settings-row">
+        <label htmlFor="auto-start-listening">Auto Start Listening</label>
+        <input
+          id="auto-start-listening"
+          type="checkbox"
+          checked={settings.autoStartListening}
+          onChange={(event) =>
+            updateSettings({ autoStartListening: event.target.checked })
+          }
+        />
+      </div>
+
+      <div className="settings-row">
+        <label htmlFor="push-to-talk-enabled">Push-To-Talk Enabled</label>
+        <input
+          id="push-to-talk-enabled"
+          type="checkbox"
+          checked={settings.pushToTalkEnabled}
+          onChange={(event) =>
+            updateSettings({ pushToTalkEnabled: event.target.checked })
+          }
+        />
+      </div>
+
       <div className="settings-row settings-row--column">
         <label htmlFor="volume">Volume ({Math.round(settings.volume * 100)}%)</label>
         <input

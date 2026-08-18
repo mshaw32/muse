@@ -8,6 +8,7 @@
 import { useEffect } from "react";
 import { useMuseStore } from "../store/museStore";
 import { useSystemStatusStore } from "../store/systemStatusStore";
+import { useVoiceStore } from "../store/voiceStore";
 import { museApiClient } from "../lib/api";
 
 const HEALTH_POLL_INTERVAL_MS = 15000;
@@ -15,6 +16,7 @@ const HEALTH_POLL_INTERVAL_MS = 15000;
 export function useElectronBridge(): void {
   const setMuseState = useMuseStore((state) => state.setState);
   const setConnection = useSystemStatusStore((state) => state.setConnection);
+  const startListening = useVoiceStore((state) => state.startListening);
 
   useEffect(() => {
     const museAPI = window.museAPI;
@@ -22,6 +24,10 @@ export function useElectronBridge(): void {
 
     const unsubscribeStart = museAPI.onStartConversation(() => {
       setMuseState("listening");
+      // Phase 4: the global push-to-talk hotkey now also engages the real
+      // (mock) Azure AI Foundry Voice session, in addition to the existing
+      // Visualizer state signal above.
+      void startListening();
     });
 
     const unsubscribeSettings = museAPI.onOpenSettings(() => {
@@ -34,7 +40,7 @@ export function useElectronBridge(): void {
       unsubscribeStart();
       unsubscribeSettings();
     };
-  }, [setMuseState]);
+  }, [setMuseState, startListening]);
 
   useEffect(() => {
     let cancelled = false;

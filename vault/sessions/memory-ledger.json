@@ -10,5 +10,29 @@
     "source": "user",
     "createdAt": "2026-08-17T20:00:34.841Z",
     "updatedAt": "2026-08-17T20:00:34.841Z"
+  },
+  {
+    "id": "mem_msxr6q1ga3xc2kvq",
+    "category": "decisions",
+    "title": "Smoke Test Entry",
+    "content": "Created by verify-phase2.sh",
+    "tags": [
+      "smoke-test"
+    ],
+    "source": "user",
+    "createdAt": "2026-08-17T21:36:02.644Z",
+    "updatedAt": "2026-08-17T21:36:02.644Z"
+  },
+  {
+    "id": "mem_msxtds8jfzcazcgp",
+    "category": "decisions",
+    "title": "Smoke Test Entry",
+    "content": "Created by verify-phase2.sh",
+    "tags": [
+      "smoke-test"
+    ],
+    "source": "user",
+    "createdAt": "2026-08-17T22:37:31.315Z",
+    "updatedAt": "2026-08-17T22:37:31.315Z"
   }
 ]

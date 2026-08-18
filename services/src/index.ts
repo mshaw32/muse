@@ -15,6 +15,13 @@ export * from "./voice/SpeechToText";
 export * from "./voice/TextToSpeech";
 export * from "./voice/VoiceSession";
 export * from "./voice/AudioManager";
+export * from "./voice/VoiceConfiguration";
+export * from "./voice/VoiceLogger";
+export * from "./voice/VoiceSessionService";
+export * from "./voice/AudioDeviceService";
+export * from "./voice/SpeechToTextService";
+export * from "./voice/TextToSpeechService";
+export * from "./voice/MockVoiceProvider";
 
 export * from "./actions/ActionService";
 export * from "./actions/ActionRegistry";
