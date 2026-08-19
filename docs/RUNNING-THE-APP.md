@@ -4,20 +4,47 @@ This guide covers everything needed to install, start, and stop MUSE in its
 different modes: web dev mode (browser), full-stack dev mode (backend +
 frontend), and the Electron desktop app.
 
-## TL;DR — get MUSE running right now
+## TL;DR — one command, one window
 
-This is the fastest path to a fully working desktop app with real voice
-(real microphone in, real Azure-synthesized speech out).
+The whole app (backend + frontend + Electron desktop shell) starts from a
+single command — no juggling multiple terminals.
 
 ```bash
 # 1. One-time setup
 npm install
 az login                     # sign in to Azure (required for real voice)
 
-# 2. Terminal 1 — backend + frontend, with real Azure AI Foundry Voice
+# 2. Start everything
+npm start
+```
+
+`npm start` builds the shared libraries, starts the backend (real Azure AI
+Foundry Voice by default), starts the frontend, waits for both to come up,
+then launches the Electron window. **Closing the Electron window
+automatically stops the backend and frontend for you too** — nothing is
+left running in the background.
+
+### Even easier: double-click launcher (macOS)
+
+There's also a double-clickable file at the repo root — `Launch MUSE.command`.
+Double-click it in Finder (or run it from Terminal) to start MUSE exactly
+like `npm start`, just like launching a normal installed app. On first
+double-click, macOS may ask you to confirm you trust the file (right-click →
+Open, once) since it isn't code-signed.
+
+Want mock voice instead (no `az login` needed)?
+
+```bash
+VOICE_PROVIDER=mock npm start
+```
+
+### Prefer separate terminals? (manual/advanced mode)
+
+```bash
+# Terminal 1 — backend + frontend, with real Azure AI Foundry Voice
 VOICE_PROVIDER=foundry npm run dev:all
 
-# 3. Terminal 2 — the desktop app
+# Terminal 2 — the desktop app
 npm run electron
 ```
 
@@ -79,6 +106,27 @@ You'll then need connectivity later to actually launch `npm run electron`.
 
 ## 2. Starting the application
 
+### Option A0 — Everything, one command (recommended)
+
+`npm start` (or double-click `Launch MUSE.command` on macOS) runs
+`scripts/start-muse.sh`, which does all of the following for you:
+
+1. Frees ports 4000/5173 if a previous run left something behind.
+2. Builds `shared`/`services`.
+3. Starts the backend and waits until it responds.
+4. Starts the frontend dev server and waits until it responds.
+5. Builds and launches the Electron desktop app in the foreground.
+
+```bash
+npm start                       # real Azure AI Foundry Voice (default)
+VOICE_PROVIDER=mock npm start   # mock voice, no az login required
+```
+
+Backend/frontend logs are written to `.muse-logs/backend.log` and
+`.muse-logs/frontend.log` if you need to inspect them while the Electron
+window is open. **Closing the Electron window stops the backend and
+frontend automatically** — see "Stopping the application" below.
+
 ### Option A — Frontend only (browser, UI work)
 
 Starts the Vite dev server only. Useful for pure UI/styling work; API calls
@@ -134,6 +182,13 @@ Notes:
   a system tray icon.
 
 ## 3. Stopping the application
+
+### One-command mode (`npm start` / `Launch MUSE.command`)
+
+Just close the Electron window (or use **tray icon menu → Exit**, or press
+**Ctrl+C** in the terminal if you launched it from one). The script's
+cleanup automatically stops the backend and frontend processes and frees
+ports 4000/5173 — there is nothing else to shut down manually.
 
 ### Web mode (Options A/B/C)
 
@@ -208,7 +263,7 @@ used — authentication is entirely via your signed-in Azure CLI identity
 |---|---|
 | `npm install` fails downloading Electron | Retry with `ELECTRON_SKIP_BINARY_DOWNLOAD=1 npm install`, then run `npm install` again later on a network that allows it before using `npm run electron`. |
 | Frontend loads but API calls fail | Make sure the backend is running (`npm run backend` or `npm run dev:all`) on port 4000. |
-| Port 4000 or 5173 already in use | Stop any previously running MUSE dev servers (`Ctrl+C` in their terminals), or find and kill the process using the port. |
+| Port 4000 or 5173 already in use | `npm start`/`Launch MUSE.command` auto-frees these ports on every run. For manual mode, stop any previously running MUSE dev servers (`Ctrl+C` in their terminals), or find and kill the process using the port. |
 | Electron window won't reappear | Click the tray icon, or use tray menu → Exit and relaunch with `npm run electron`. |
 | Changes to `shared/` or `services/` not reflected | Re-run `npm run build:libs` (done automatically by `npm run backend`, `npm run dev:all`, and `npm run electron`). |
 | Real voice diagnostics fail with an auth/permission error | Run `az login` again (token may have expired), and confirm your account has access to the `mbgsol-muse-dev-resource` Cognitive Services resource (may require the "Cognitive Services Speech User" role). |
@@ -218,13 +273,16 @@ used — authentication is entirely via your signed-in Azure CLI identity
 
 ```bash
 npm install                # install all workspace dependencies (once, or after dependency changes)
+npm start                  # everything at once: backend + frontend + Electron (recommended)
+VOICE_PROVIDER=mock npm start  # everything at once, mock voice (no az login needed)
 npm run dev                # frontend only (http://localhost:5173)
 npm run backend            # backend only (http://localhost:4000), mock voice provider
 VOICE_PROVIDER=foundry npm run backend  # backend with real Azure AI Foundry Voice (requires az login)
-npm run dev:all            # backend + frontend together (recommended)
-npm run electron           # desktop app (run alongside `npm run dev:all`)
+npm run dev:all            # backend + frontend together, manual/advanced mode
+npm run electron           # desktop app only (run alongside `npm run dev:all`)
 npm run verify:all         # smoke-test all five phases
 ```
 
-To stop: **Ctrl+C** in the terminal(s) for web mode, or **tray icon → Exit**
+To stop: close the Electron window (`npm start` mode auto-stops everything),
+**Ctrl+C** in the terminal(s) for manual web mode, or **tray icon → Exit**
 for the desktop app.
