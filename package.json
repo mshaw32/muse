@@ -17,6 +17,7 @@
     "build:services": "npm run build --workspace=services",
     "build:libs": "npm run build:shared && npm run build:services",
     "electron": "npm run build:libs && npm run build --workspace=electron && npm run start --workspace=electron",
+    "start": "bash ./scripts/start-muse.sh",
     "dev:all": "npm run build:libs && concurrently -k -n BACKEND,FRONTEND -c blue,green \"npm run backend\" \"npm run dev\"",
     "verify:phase1": "bash ./scripts/verify-phase1.sh",
     "verify:phase2": "bash ./scripts/verify-phase2.sh",

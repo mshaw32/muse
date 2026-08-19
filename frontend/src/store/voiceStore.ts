@@ -23,6 +23,11 @@ interface VoiceStore {
   microphones: VoiceDevice[];
   speakers: VoiceDevice[];
   voiceProfiles: VoiceProfile[];
+  /** Selected voice profile ID for `speak()` calls: a built-in MUSE profile
+   * ID (`muse-default`/`muse-calm`/`muse-energetic`) or any raw Azure
+   * neural voice name (e.g. `en-US-JennyNeural`). Persisted to
+   * localStorage so the choice survives reloads. */
+  selectedVoiceProfileId: string;
   currentTranscript: string;
   partialTranscript: string;
   isSpeaking: boolean;
@@ -38,10 +43,21 @@ interface VoiceStore {
   loadDevices: () => Promise<void>;
   selectMicrophone: (deviceId: string) => Promise<void>;
   selectSpeaker: (deviceId: string) => Promise<void>;
+  selectVoiceProfile: (voiceProfileId: string) => void;
   startListening: () => Promise<void>;
   stopListening: () => Promise<VoiceTranscript | null>;
   speak: (text: string, voiceProfileId?: string) => Promise<void>;
   refreshStatus: () => Promise<void>;
+}
+
+const VOICE_PROFILE_STORAGE_KEY = "muse.voice.selectedVoiceProfileId";
+
+function loadStoredVoiceProfileId(): string {
+  try {
+    return localStorage.getItem(VOICE_PROFILE_STORAGE_KEY) || "muse-default";
+  } catch {
+    return "muse-default";
+  }
 }
 
 function mapSessionState(voiceState: VoiceState): { isListening: boolean; isSpeaking: boolean } {
@@ -59,6 +75,7 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
   microphones: [],
   speakers: [],
   voiceProfiles: [],
+  selectedVoiceProfileId: loadStoredVoiceProfileId(),
   currentTranscript: "",
   partialTranscript: "",
   isSpeaking: false,
@@ -104,9 +121,20 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
     }
   },
 
+  selectVoiceProfile: (voiceProfileId) => {
+    set({ selectedVoiceProfileId: voiceProfileId });
+    try {
+      localStorage.setItem(VOICE_PROFILE_STORAGE_KEY, voiceProfileId);
+    } catch {
+      // best-effort persistence only (e.g. storage disabled/unavailable)
+    }
+  },
+
   startListening: async () => {
+    let backendSessionStarted = false;
     try {
       const { session } = await voiceClient.start();
+      backendSessionStarted = true;
       set({
         voiceState: session.state,
         currentTranscript: "",
@@ -124,7 +152,26 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
         void voiceClient.sendAudio(base64Pcm);
       }, micDeviceId);
     } catch (error) {
-      set({ voiceState: "Error", error: error instanceof Error ? error.message : "start_failed" });
+      // If the backend session started but real microphone capture failed
+      // (e.g. getUserMedia permission denied/no device), stop the backend
+      // session too so the next Start doesn't collide with an already-open
+      // one, and surface a clear, actionable message instead of a raw
+      // DOMException/browser error string.
+      if (backendSessionStarted) {
+        microphoneCapture.stop();
+        try {
+          await voiceClient.stop();
+        } catch {
+          // best-effort cleanup only
+        }
+      }
+      const message =
+        error instanceof DOMException && (error.name === "NotAllowedError" || error.name === "NotFoundError")
+          ? "Microphone access was denied or no microphone was found. Check your OS microphone permission for MUSE and try again."
+          : error instanceof Error
+            ? error.message
+            : "start_failed";
+      set({ voiceState: "Error", isListening: false, error: message });
     }
   },
 
@@ -149,7 +196,8 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
   speak: async (text, voiceProfileId) => {
     set({ voiceState: "Speaking", isSpeaking: true });
     try {
-      const response = await voiceClient.speak(text, voiceProfileId);
+      const resolvedProfileId = voiceProfileId ?? get().selectedVoiceProfileId;
+      const response = await voiceClient.speak(text, resolvedProfileId);
       // Phase 4.1 — real speaker playback of the synthesized audio (mock
       // provider returns a near-silent WAV, so this is safe either way).
       const speakerId = get().speakerDevice?.id ?? null;

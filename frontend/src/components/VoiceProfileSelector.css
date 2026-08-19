@@ -1,0 +1,29 @@
+.voice-profile-selector {
+  width: 100%;
+}
+
+.voice-profile-custom {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.4rem;
+}
+
+.voice-profile-custom-input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: #e6f1ff;
+  padding: 0.45rem 0.6rem;
+  font-size: 0.82rem;
+}
+
+.voice-profile-custom-input:focus {
+  outline: none;
+  border-color: #0078d4;
+}
+
+.voice-profile-custom-hint {
+  font-size: 0.7rem;
+  color: #6c85a3;
+}

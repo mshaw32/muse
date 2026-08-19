@@ -6,7 +6,7 @@
  * preferences without direct Node/Electron access.
  */
 
-import { app, ipcMain, session } from "electron";
+import { app, ipcMain, session, systemPreferences } from "electron";
 import { Logger, SettingsService, SettingsStore, WindowMode } from "@muse/shared";
 import { getSettingsDirectory } from "./config";
 import { WindowManager } from "./windowManager";
@@ -27,8 +27,12 @@ let isQuitting = false;
 
 app.whenReady().then(() => {
   // Phase 4.1 — real Azure AI Foundry Voice requires genuine microphone
-  // access via getUserMedia in the renderer. Grant media permission
-  // requests automatically since MUSE is a trusted, single-purpose app.
+  // access via getUserMedia in the renderer. Grant Electron's own media
+  // permission requests automatically (MUSE is a trusted, single-purpose
+  // app), but this does NOT bypass the OS-level microphone permission
+  // prompt (e.g. macOS System Settings > Privacy > Microphone) — that must
+  // still be granted by the user the first time, or getUserMedia will
+  // reject and the frontend will surface a real "Error" state.
   session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
     if (permission === "media") {
       callback(true);
@@ -36,6 +40,16 @@ app.whenReady().then(() => {
     }
     callback(false);
   });
+
+  // On macOS, proactively request OS-level microphone access on startup so
+  // the user sees the system permission dialog immediately instead of
+  // getUserMedia silently failing the first time Push-To-Talk is pressed.
+  if (process.platform === "darwin" && systemPreferences.getMediaAccessStatus) {
+    const micStatus = systemPreferences.getMediaAccessStatus("microphone");
+    if (micStatus !== "granted") {
+      void systemPreferences.askForMediaAccess("microphone");
+    }
+  }
 
   const settingsService = new SettingsService(new SettingsStore(getSettingsDirectory()));
   const windowManager = new WindowManager();

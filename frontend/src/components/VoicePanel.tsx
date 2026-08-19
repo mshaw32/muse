@@ -12,6 +12,7 @@ import { useVoice } from "../hooks/useVoice";
 import VoiceStatus from "./VoiceStatus";
 import MicrophoneSelector from "./MicrophoneSelector";
 import SpeakerSelector from "./SpeakerSelector";
+import VoiceProfileSelector from "./VoiceProfileSelector";
 import "./VoicePanel.css";
 
 export default function VoicePanel() {
@@ -40,6 +41,7 @@ export default function VoicePanel() {
       <div className="voice-panel-devices">
         <MicrophoneSelector />
         <SpeakerSelector />
+        <VoiceProfileSelector />
       </div>
 
       <div className="voice-panel-transcript">

@@ -31,6 +31,8 @@ export function useVoice() {
   const speakerDevice = useVoiceStore((state) => state.speakerDevice);
   const microphones = useVoiceStore((state) => state.microphones);
   const speakers = useVoiceStore((state) => state.speakers);
+  const voiceProfiles = useVoiceStore((state) => state.voiceProfiles);
+  const selectedVoiceProfileId = useVoiceStore((state) => state.selectedVoiceProfileId);
   const currentTranscript = useVoiceStore((state) => state.currentTranscript);
   const partialTranscript = useVoiceStore((state) => state.partialTranscript);
   const isMock = useVoiceStore((state) => state.isMock);
@@ -43,6 +45,7 @@ export function useVoice() {
   const loadDevices = useVoiceStore((state) => state.loadDevices);
   const selectMicrophone = useVoiceStore((state) => state.selectMicrophone);
   const selectSpeaker = useVoiceStore((state) => state.selectSpeaker);
+  const selectVoiceProfile = useVoiceStore((state) => state.selectVoiceProfile);
   const startListeningAction = useVoiceStore((state) => state.startListening);
   const stopListeningAction = useVoiceStore((state) => state.stopListening);
   const speakAction = useVoiceStore((state) => state.speak);
@@ -96,6 +99,8 @@ export function useVoice() {
     speakerDevice,
     microphones,
     speakers,
+    voiceProfiles,
+    selectedVoiceProfileId,
     currentTranscript,
     partialTranscript,
     isMock,
@@ -108,5 +113,6 @@ export function useVoice() {
     speak,
     selectMicrophone,
     selectSpeaker,
+    selectVoiceProfile,
   };
 }

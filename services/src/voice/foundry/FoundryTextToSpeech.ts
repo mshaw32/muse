@@ -114,6 +114,20 @@ const VOICE_PROFILE_MAP: Record<string, string> = {
   "muse-energetic": "en-US-AndrewMultilingualNeural",
 };
 
+/**
+ * Resolves a MUSE `voiceProfileId` to a real Azure neural voice name.
+ *
+ * Accepts three forms:
+ *  - One of the built-in MUSE profile IDs (`muse-default`/`muse-calm`/
+ *    `muse-energetic`) — mapped via `VOICE_PROFILE_MAP`.
+ *  - A raw Azure neural voice name (e.g. `en-US-JennyNeural`) passed
+ *    straight through, so users can select any voice from Azure's full
+ *    catalog without MUSE needing to hardcode every one.
+ *  - Empty/unset — falls back to the configured default voice.
+ */
 function mapVoiceProfileToNeuralVoice(voiceProfileId: string, fallback: string): string {
-  return VOICE_PROFILE_MAP[voiceProfileId] ?? fallback;
+  if (!voiceProfileId) {
+    return fallback;
+  }
+  return VOICE_PROFILE_MAP[voiceProfileId] ?? voiceProfileId;
 }

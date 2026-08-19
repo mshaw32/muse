@@ -38,8 +38,18 @@ export class MicrophoneCapture {
     if (this.stream) return;
 
     this.onChunk = onChunk;
+
+    // The device list surfaced by `/api/voice/devices` today comes from
+    // `AudioManager`'s placeholder device catalog (ids like "default-mic"),
+    // not real hardware device ids from `navigator.mediaDevices`. Passing a
+    // non-existent id as an `exact` constraint makes getUserMedia reject
+    // immediately with OverconstrainedError. Only honor `deviceId` if it
+    // actually matches a real, currently-enumerable input device;
+    // otherwise fall back to the OS default microphone.
+    const resolvedDeviceId = deviceId ? await this.resolveRealDeviceId(deviceId) : null;
+
     this.stream = await navigator.mediaDevices.getUserMedia({
-      audio: deviceId ? { deviceId: { exact: deviceId } } : true,
+      audio: resolvedDeviceId ? { deviceId: { exact: resolvedDeviceId } } : true,
     });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -60,6 +70,26 @@ export class MicrophoneCapture {
 
     this.sourceNode.connect(this.processorNode);
     this.processorNode.connect(this.audioContext.destination);
+  }
+
+  /**
+   * Checks whether `deviceId` matches a real, currently-enumerable audio
+   * input device (via `enumerateDevices`), returning it unchanged if so,
+   * or `null` if it doesn't correspond to real hardware (e.g. one of the
+   * placeholder mock device ids like "default-mic"/"headset-mic" surfaced
+   * by the backend's `/api/voice/devices` route before real device
+   * enumeration replaces it). Falling back to `null` lets `getUserMedia`
+   * use the OS default microphone instead of throwing
+   * `OverconstrainedError`.
+   */
+  private async resolveRealDeviceId(deviceId: string): Promise<string | null> {
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const match = devices.find((device) => device.kind === "audioinput" && device.deviceId === deviceId);
+      return match ? deviceId : null;
+    } catch {
+      return null;
+    }
   }
 
   stop(): void {
