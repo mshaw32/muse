@@ -9,6 +9,8 @@ export * from "./copilot/CopilotService";
 export * from "./copilot/CopilotChatService";
 export * from "./copilot/CopilotRetrievalService";
 export * from "./copilot/CopilotSessionManager";
+export * from "./copilot/CopilotStudioAuth";
+export * from "./copilot/CopilotStudioAdapter";
 
 export * from "./voice/VoiceService";
 export * from "./voice/SpeechToText";
