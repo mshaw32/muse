@@ -43,7 +43,7 @@ export class FoundryTextToSpeech implements TextToSpeechEngine {
     speechConfig.speechSynthesisVoiceName = request.voiceProfileId
       ? mapVoiceProfileToNeuralVoice(request.voiceProfileId, this.config.getVoiceProfile())
       : this.config.getVoiceProfile();
-    speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio16Khz32KBitRateMonoMp3;
+    speechConfig.speechSynthesisOutputFormat = sdk.SpeechSynthesisOutputFormat.Audio24Khz96KBitRateMonoMp3;
 
     // Null audio output config: we want the raw audio bytes returned to us
     // (to send to the frontend for playback), not played on this machine's
@@ -99,10 +99,18 @@ function buildSsml(request: SynthesisRequest, voiceName: string): string {
   const rate = request.rate ? `${Math.round(request.rate * 100)}%` : "100%";
   const pitch = request.pitch ? `${request.pitch > 0 ? "+" : ""}${Math.round(request.pitch * 100)}%` : "0%";
 
+  // Insert a short natural pause after sentence-ending punctuation. Without
+  // this, short phrases render with no breathing room between sentences,
+  // making the (correctly-rated) speech sound rushed/robotic.
+  const textWithPauses = escapeXml(request.text).replace(
+    /([.!?])(\s+)/g,
+    '$1<break time="300ms"/>$2',
+  );
+
   return (
     `<speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="en-US">` +
     `<voice name="${voiceName}">` +
-    `<prosody rate="${rate}" pitch="${pitch}">${escapeXml(request.text)}</prosody>` +
+    `<prosody rate="${rate}" pitch="${pitch}">${textWithPauses}</prosody>` +
     `</voice></speak>`
   );
 }

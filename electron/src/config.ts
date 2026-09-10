@@ -9,7 +9,14 @@
 import * as path from "path";
 import { app } from "electron";
 
-export const isDev = !app.isPackaged;
+// A packaged .app (see `npm run package:mac`) is required for macOS to
+// prompt for/track microphone permission correctly (unpacked `electron .`
+// dev runs are silently denied real mic audio by the OS — see docs on
+// Press-to-Talk troubleshooting). We still want the packaged shell to load
+// the live Vite dev server + local backend during development, so
+// `MUSE_FORCE_DEV_SERVER=1` (set by `scripts/start-muse.sh` when launching
+// the packaged app) overrides the otherwise-production `isDev` check.
+export const isDev = !app.isPackaged || process.env.MUSE_FORCE_DEV_SERVER === "1";
 
 export const DEV_SERVER_URL = process.env.MUSE_DEV_SERVER_URL ?? "http://localhost:5173";
 

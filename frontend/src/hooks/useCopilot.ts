@@ -47,6 +47,23 @@ export function useCopilot() {
     [streamPrompt, sendPrompt],
   );
 
+  /**
+   * Sends a prompt to Copilot (non-streaming) and resolves with the
+   * assistant's final reply text — used by voice/push-to-talk so the
+   * response can be spoken back via TTS once it's fully available.
+   */
+  const sendPromptAndGetReply = useCallback(
+    async (prompt: string): Promise<string | null> => {
+      await sendPrompt(prompt);
+      const conversation = useCopilotStore.getState().currentConversation;
+      const lastAssistantMessage = [...(conversation?.messages ?? [])]
+        .reverse()
+        .find((message) => message.role === "assistant");
+      return lastAssistantMessage?.content ?? null;
+    },
+    [sendPrompt],
+  );
+
   return {
     currentConversation,
     copilotStatus,
@@ -63,5 +80,6 @@ export function useCopilot() {
     loadHistory,
     exportConversation,
     retrieve,
+    sendPromptAndGetReply,
   };
 }

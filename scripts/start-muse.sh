@@ -108,9 +108,20 @@ log "Starting frontend on port $FRONTEND_PORT..."
 FRONTEND_PID=$!
 wait_for_http "http://localhost:$FRONTEND_PORT" "frontend"
 
-log "Building and launching Electron app..."
+PACKAGED_APP="$ROOT_DIR/electron/dist-app/mac-arm64/MUSE.app/Contents/MacOS/MUSE"
+
 npm run build --workspace=electron
-npm run start --workspace=electron
+
+if [ -x "$PACKAGED_APP" ]; then
+  # Launch the properly packaged & signed MUSE.app so macOS grants it its
+  # own microphone permission identity (raw "electron ." dev processes are
+  # never listed in Privacy & Security > Microphone).
+  log "Launching packaged MUSE.app..."
+  MUSE_FORCE_DEV_SERVER=1 "$PACKAGED_APP"
+else
+  log "Packaged MUSE.app not found, falling back to dev Electron (mic permission may not work)."
+  npm run start --workspace=electron
+fi
 
 # When Electron exits (window closed / quit), the trap above stops
 # the backend and frontend automatically.

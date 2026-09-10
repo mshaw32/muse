@@ -1,10 +1,12 @@
 import { useCallback, useRef } from "react";
 import { motion } from "framer-motion";
 import { useVoice } from "../hooks/useVoice";
+import { useCopilot } from "../hooks/useCopilot";
 import "./PushToTalkButton.css";
 
 export default function PushToTalkButton() {
   const { voiceState, isListening, startListening, stopListening, speak } = useVoice();
+  const { copilotStatus, sendPromptAndGetReply } = useCopilot();
   const wasListeningRef = useRef(false);
 
   const handleStart = useCallback(() => {
@@ -19,13 +21,19 @@ export default function PushToTalkButton() {
 
     void (async () => {
       const transcript = await stopListening();
-      if (transcript && transcript.text.trim().length > 0) {
-        // Phase 4: real (mock) voice-generated response, spoken back via the
-        // Azure AI Foundry Voice text-to-speech pipeline.
-        await speak(`I heard: "${transcript.text}"`);
+      if (!transcript || transcript.text.trim().length === 0) return;
+
+      if (copilotStatus !== "connected") {
+        await speak("Please sign in to Copilot first so I can answer questions and take actions for you.");
+        return;
+      }
+
+      const reply = await sendPromptAndGetReply(transcript.text);
+      if (reply) {
+        await speak(reply);
       }
     })();
-  }, [stopListening, speak]);
+  }, [stopListening, speak, copilotStatus, sendPromptAndGetReply]);
 
   return (
     <div className="push-to-talk-wrapper">

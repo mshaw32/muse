@@ -65,6 +65,14 @@ export class MicrophoneCapture {
       const downsampled = downsampleTo16kMono(inputData, inputSampleRate, TARGET_SAMPLE_RATE);
       const pcm16 = floatTo16BitPCM(downsampled);
       const base64 = arrayBufferToBase64(pcm16.buffer);
+      // TEMP DEBUG (Press-to-Talk troubleshooting): log peak amplitude so we
+      // can tell whether real (non-silent) audio is actually being captured.
+      let peak = 0;
+      for (let i = 0; i < inputData.length; i += 1) {
+        peak = Math.max(peak, Math.abs(inputData[i]));
+      }
+      // eslint-disable-next-line no-console
+      console.log(`[mic-debug] samples=${inputData.length} peak=${peak.toFixed(4)} chunkBytes=${pcm16.buffer.byteLength}`);
       this.onChunk?.(base64);
     };
 

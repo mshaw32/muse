@@ -3,3 +3,6 @@ dist
 .DS_Store
 *.log
 .muse-data
+electron/dist-app/
+*.bak
+.electron-builder/

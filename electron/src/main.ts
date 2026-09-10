@@ -16,6 +16,14 @@ import { setLaunchAtLogin, syncStartupModeFromSettings } from "./startup";
 
 const logger = new Logger("muse:electron:main");
 
+// This environment's GPU process repeatedly fails to launch on macOS
+// (Chromium error_code=1003, "GPU process isn't usable"), which crashes the
+// whole app on startup. MUSE is a simple UI (no canvas/WebGL-heavy
+// rendering), so we trade GPU-accelerated compositing for a stable launch.
+app.disableHardwareAcceleration();
+app.commandLine.appendSwitch("no-sandbox");
+app.commandLine.appendSwitch("disable-gpu-sandbox");
+
 // macOS/Windows single-instance lock: focus the existing window instead of
 // spawning a second MUSE process when the user re-launches or hits the hotkey.
 const gotSingleInstanceLock = app.requestSingleInstanceLock();

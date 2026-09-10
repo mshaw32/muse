@@ -52,6 +52,10 @@ interface VoiceStore {
 
 const VOICE_PROFILE_STORAGE_KEY = "muse.voice.selectedVoiceProfileId";
 
+/** Azure neural voices default to a brisk 100% rate; MUSE speaks slightly
+ * slower by default (85%) so responses are easier to follow. */
+const DEFAULT_SPEECH_RATE = 0.85;
+
 function loadStoredVoiceProfileId(): string {
   try {
     return localStorage.getItem(VOICE_PROFILE_STORAGE_KEY) || "muse-default";
@@ -147,9 +151,20 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
       // against the mock provider, `/api/voice/audio` calls are harmless
       // no-ops server-side; when running against Foundry, this streams
       // real 16kHz PCM audio into the live Azure speech recognizer.
+      //
+      // Chunks must reach the backend in the same order they were
+      // captured — the server appends each one directly to Foundry's
+      // PushAudioInputStream. Firing every `sendAudio` call independently
+      // lets the browser's HTTP connection pool race requests and deliver
+      // them out of order, silently corrupting the audio stream (Foundry
+      // then recognizes nothing). Chain them so each chunk's request
+      // completes before the next one starts.
+      let sendQueue: Promise<unknown> = Promise.resolve();
       const micDeviceId = get().microphoneDevice?.id ?? null;
       await microphoneCapture.start((base64Pcm) => {
-        void voiceClient.sendAudio(base64Pcm);
+        sendQueue = sendQueue
+          .then(() => voiceClient.sendAudio(base64Pcm))
+          .catch(() => undefined);
       }, micDeviceId);
     } catch (error) {
       // If the backend session started but real microphone capture failed
@@ -197,7 +212,7 @@ export const useVoiceStore = create<VoiceStore>((set, get) => ({
     set({ voiceState: "Speaking", isSpeaking: true });
     try {
       const resolvedProfileId = voiceProfileId ?? get().selectedVoiceProfileId;
-      const response = await voiceClient.speak(text, resolvedProfileId);
+      const response = await voiceClient.speak(text, resolvedProfileId, DEFAULT_SPEECH_RATE);
       // Phase 4.1 — real speaker playback of the synthesized audio (mock
       // provider returns a near-silent WAV, so this is safe either way).
       const speakerId = get().speakerDevice?.id ?? null;

@@ -48,6 +48,18 @@ export class WindowManager {
 
     window.once("ready-to-show", () => window.show());
 
+    window.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+      // eslint-disable-next-line no-console
+      console.log(`[renderer:${level}] ${message} (${sourceId}:${line})`);
+    });
+    window.webContents.on("did-fail-load", (_event, errorCode, errorDescription, validatedURL) => {
+      // eslint-disable-next-line no-console
+      console.log(`[did-fail-load] ${errorCode} ${errorDescription} ${validatedURL}`);
+    });
+    if (process.env.MUSE_OPEN_DEVTOOLS === "1") {
+      window.webContents.openDevTools({ mode: "detach" });
+    }
+
     // Open external links (e.g. future Copilot citation URLs) in the OS
     // browser rather than navigating the MUSE shell away from the app.
     window.webContents.setWindowOpenHandler(({ url }) => {
