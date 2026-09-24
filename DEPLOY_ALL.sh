@@ -83,7 +83,7 @@ if [ -z "$APP_EXISTS" ]; then
       --resource-group $RESOURCE_GROUP \
       --plan $PLAN_NAME \
       --name $APP_SERVICE_NAME \
-      --runtime "NODE|18-lts"
+      --runtime "NODE:22-lts"
     echo -e "${GREEN}✓ App Service created${NC}"
 else
     echo -e "${GREEN}✓ App Service already exists${NC}"
@@ -113,7 +113,7 @@ az webapp up \
   --resource-group $RESOURCE_GROUP \
   --name $APP_SERVICE_NAME \
   --src-dir backend \
-  --runtime "NODE|18-lts" \
+  --runtime "NODE:22-lts" \
   --output none
 
 echo -e "${GREEN}✓ Code deployed${NC}"
