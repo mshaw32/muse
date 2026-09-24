@@ -31,7 +31,7 @@ az webapp create \
   --resource-group rg-mbgsol-muse-dev \
   --plan MuseAppPlan \
   --name muse-backend \
-  --runtime "NODE|18-lts"
+  --runtime "NODE:22-lts"
 ```
 
 Wait for it to complete. Should take 2-3 minutes.
@@ -64,7 +64,7 @@ az webapp up \
   --resource-group rg-mbgsol-muse-dev \
   --name muse-backend \
   --src-dir backend \
-  --runtime "NODE|18-lts"
+  --runtime "NODE:22-lts"
 ```
 
 Wait for it to complete. Should take 3-5 minutes.
