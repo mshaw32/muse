@@ -1,155 +1,139 @@
 #!/bin/bash
-set -e
 
-# MUSE Copilot Studio Agent - Complete Deployment Script
-# This script fully automates the deployment of Muse to Azure App Service
-# and wires Copilot Studio agent to the backend.
+# Master deployment wrapper
+# Intelligently handles all 3 deployment options
+# Tests connectivity and chooses the best method
+
+set -e
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
 NC='\033[0m'
 
-echo -e "${YELLOW}=== MUSE Copilot Studio Deployment ===${NC}"
-echo ""
-echo "This script will:"
-echo "  1. Create/update Azure AD app registration for OAuth2"
-echo "  2. Deploy backend to App Service"
-echo "  3. Set environment variables"
-echo "  4. Create Copilot Studio agent"
+echo -e "${BLUE}╔════════════════════════════════════════════╗${NC}"
+echo -e "${BLUE}║   MUSE DEPLOYMENT - SMART ORCHESTRATOR    ║${NC}"
+echo -e "${BLUE}╚════════════════════════════════════════════╝${NC}"
 echo ""
 
-# Require Azure CLI
-if ! command -v az &> /dev/null; then
-    echo -e "${RED}ERROR: Azure CLI is required. Install from https://learn.microsoft.com/en-us/cli/azure/install-azure-cli${NC}"
+# First: Run pre-flight checks
+echo -e "${CYAN}Running pre-flight checks...${NC}"
+if ! ./pre-flight-check.sh | grep -q "All checks passed"; then
+    echo -e "${RED}❌ Pre-flight checks failed. Fix issues and retry.${NC}"
     exit 1
 fi
-
-# Check if logged in
-if ! az account show &> /dev/null; then
-    echo -e "${YELLOW}Logging in to Azure...${NC}"
-    az login
-fi
-
-SUBSCRIPTION_ID="e37ff56d-6804-43a3-b7eb-a4952f1f89e3"
-RESOURCE_GROUP="rg-mbgsol-muse-dev"
-
-# Prompt for missing values
-echo -e "${YELLOW}Enter deployment details:${NC}"
-read -p "App Service name (e.g., muse-prod): " APP_SERVICE_NAME
-read -p "Azure AD Tenant ID (e.g., de08c407-...): " TENANT_ID
-read -p "Azure AD App Registration name (leave blank to create new): " APP_REG_NAME
-
-if [ -z "$APP_REG_NAME" ]; then
-    APP_REG_NAME="muse-copilot-agent"
-fi
-
 echo ""
-echo -e "${YELLOW}Step 1: Create/Update Azure AD App Registration${NC}"
 
-# Create app registration if it doesn't exist
-APP_ID=$(az ad app list --filter "displayName eq '$APP_REG_NAME'" --query "[0].appId" -o tsv 2>/dev/null || echo "")
-
-if [ -z "$APP_ID" ] || [ "$APP_ID" = "None" ]; then
-    echo "Creating new app registration: $APP_REG_NAME"
-    APP_ID=$(az ad app create --display-name "$APP_REG_NAME" \
-        --web-redirect-uris "https://$APP_SERVICE_NAME.azurewebsites.net/auth/callback" \
-        --query "appId" -o tsv)
-    echo -e "${GREEN}✓ Created app registration with ID: $APP_ID${NC}"
-else
-    echo -e "${GREEN}✓ Found existing app registration: $APP_ID${NC}"
+# Test Azure CLI connectivity
+echo -e "${CYAN}Testing Azure CLI connectivity...${NC}"
+if ! az account show &>/dev/null; then
+    echo -e "${RED}❌ Azure CLI not logged in${NC}"
+    echo "Run: az login --tenant de08c407-19b9-427d-9fe8-edf254300ca7"
+    exit 1
 fi
+echo -e "${GREEN}✓ Azure CLI authenticated${NC}"
+echo ""
 
-# Create client secret
-echo "Creating client secret..."
-SECRET_RESPONSE=$(az ad app credential reset --id "$APP_ID" --display-name "muse-deployment-$(date +%s)" 2>/dev/null || true)
+# Test HTTPS connectivity to Azure
+echo -e "${CYAN}Testing HTTPS connectivity to Azure...${NC}"
+HTTPS_TEST=$(curl -s -o /dev/null -w "%{http_code}" https://login.microsoft.com/ 2>/dev/null || echo "000")
 
-if [ -z "$SECRET_RESPONSE" ] || [ "$SECRET_RESPONSE" = "None" ]; then
-    # Use alternate method
-    CLIENT_SECRET=$(az ad app credential reset --id "$APP_ID" --query "password" -o tsv 2>/dev/null || echo "")
-    if [ -z "$CLIENT_SECRET" ]; then
-        echo -e "${RED}ERROR: Could not create client secret. Manually create one in Azure Portal > App Registrations > $APP_REG_NAME > Certificates & secrets${NC}"
-        exit 1
+if [ "$HTTPS_TEST" = "200" ] || [ "$HTTPS_TEST" = "302" ]; then
+    echo -e "${GREEN}✓ HTTPS connectivity working${NC}"
+    DEPLOY_METHOD="automated"
+    echo ""
+    echo -e "${YELLOW}Deploying via Option A: Automated (CLI)${NC}"
+    echo "This will:"
+    echo "  1. Build shared libraries"
+    echo "  2. Build backend"
+    echo "  3. Install dependencies"
+    echo "  4. Deploy to Azure App Service"
+    echo "  5. Set environment variables"
+    echo ""
+    read -p "Continue with automated deployment? (y/N) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        ./fix-and-retry-deploy.sh
+        DEPLOY_SUCCESS=$?
+    else
+        DEPLOY_SUCCESS=1
     fi
 else
-    CLIENT_SECRET=$(echo "$SECRET_RESPONSE" | jq -r '.password')
+    echo -e "${YELLOW}⚠ HTTPS connectivity issue detected${NC}"
+    echo "Likely cause: Corporate proxy/firewall"
+    echo ""
+    echo -e "${YELLOW}Switching to Option C: Azure Portal (No CLI)${NC}"
+    echo ""
+    echo "This will:"
+    echo "  1. Build libraries locally"
+    echo "  2. Build backend locally"
+    echo "  3. Create deployment zip"
+    echo "  4. Show instructions to upload via Azure Portal"
+    echo ""
+    read -p "Continue with Portal-based deployment? (y/N) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        DEPLOY_METHOD="portal"
+        
+        # Build and zip locally
+        echo -e "${CYAN}Building libraries...${NC}"
+        npm run build:libs
+        
+        echo -e "${CYAN}Building backend...${NC}"
+        cd backend
+        npm run build
+        npm install --omit=dev
+        
+        echo -e "${CYAN}Creating deployment package...${NC}"
+        cd ..
+        zip -r muse-backend-deploy.zip backend/dist backend/package.json
+        
+        echo -e "${GREEN}✅ Deployment package created: muse-backend-deploy.zip${NC}"
+        echo ""
+        echo -e "${YELLOW}Next steps:${NC}"
+        echo "  1. Open Azure Portal: https://portal.azure.com"
+        echo "  2. Search: 'muse-backend'"
+        echo "  3. Click App Service resource"
+        echo "  4. Go to: Deployment Center → Manual Deployment"
+        echo "  5. Upload: muse-backend-deploy.zip"
+        echo "  6. Wait ~5 minutes for deployment to complete"
+        echo "  7. Go to: Configuration → Application Settings"
+        echo "  8. Add these settings:"
+        echo "     - NODE_ENV = production"
+        echo "     - COPILOT_STUDIO_CLIENT_ID = [your-client-id]"
+        echo "     - COPILOT_STUDIO_CLIENT_SECRET = [your-client-secret]"
+        echo "     - COPILOT_STUDIO_TENANT_ID = de08c407-19b9-427d-9fe8-edf254300ca7"
+        echo "  9. Click Restart"
+        echo "  10. Follow COPILOT_STUDIO_WIRING.md for wiring"
+        echo ""
+        echo "File ready for upload: muse-backend-deploy.zip"
+        DEPLOY_SUCCESS=0
+    else
+        DEPLOY_SUCCESS=1
+    fi
 fi
 
-echo -e "${GREEN}✓ Client secret created${NC}"
-
 echo ""
-echo -e "${YELLOW}Step 2: Deploy Backend to App Service${NC}"
+echo "════════════════════════════════════════════"
 
-# Build backend
-echo "Building backend..."
-npm run build:services 2>&1 | tail -5 || true
-
-# Deploy to App Service
-echo "Deploying to App Service: $APP_SERVICE_NAME"
-az webapp up --name "$APP_SERVICE_NAME" \
-    --resource-group "$RESOURCE_GROUP" \
-    --runtime "node|18" \
-    --src-dir "backend" \
-    --language "typescript" 2>&1 | tail -10 || true
-
-echo -e "${GREEN}✓ Backend deployed${NC}"
-
-echo ""
-echo -e "${YELLOW}Step 3: Set Environment Variables in App Service${NC}"
-
-az webapp config appsettings set \
-    --resource-group "$RESOURCE_GROUP" \
-    --name "$APP_SERVICE_NAME" \
-    --settings \
-        COPILOT_STUDIO_ENDPOINT="https://copilot.microsoft.com/api" \
-        COPILOT_STUDIO_CLIENT_ID="$APP_ID" \
-        COPILOT_STUDIO_CLIENT_SECRET="$CLIENT_SECRET" \
-        COPILOT_STUDIO_TENANT_ID="$TENANT_ID" \
-        NODE_ENV="production" \
-        PORT="8080"
-
-echo -e "${GREEN}✓ Environment variables set${NC}"
-
-echo ""
-echo -e "${YELLOW}Step 4: Verify Deployment${NC}"
-
-APP_URL="https://$APP_SERVICE_NAME.azurewebsites.net"
-echo "Testing backend endpoint: $APP_URL/api/copilot/status"
-
-# Wait for app to start
-sleep 5
-
-STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$APP_URL/api/copilot/status")
-if [ "$STATUS" = "200" ]; then
-    echo -e "${GREEN}✓ Backend is running and accessible${NC}"
+if [ $DEPLOY_SUCCESS -eq 0 ]; then
+    echo -e "${GREEN}✅ Deployment initiated successfully${NC}"
+    echo ""
+    echo -e "${YELLOW}Next steps:${NC}"
+    echo "  1. Wait for deployment to complete"
+    echo "  2. Run: ./post-deploy-verify.sh"
+    echo "  3. Run: ./e2e-verify.sh"
+    echo "  4. Run: ./copilot-wiring-helper.sh"
+    echo "  5. Follow: COPILOT_STUDIO_WIRING.md"
 else
-    echo -e "${YELLOW}⚠ Backend returned HTTP $STATUS (expected 200)${NC}"
-    echo "This may be normal if the app is still starting. Check logs with:"
-    echo "  az webapp log tail --name $APP_SERVICE_NAME --resource-group $RESOURCE_GROUP"
+    echo -e "${RED}❌ Deployment failed or cancelled${NC}"
+    echo ""
+    echo -e "${YELLOW}To retry:${NC}"
+    echo "  • Option A (Automated): ./fix-and-retry-deploy.sh"
+    echo "  • Option B (Manual): Follow MANUAL_DEPLOYMENT.md"
+    echo "  • Option C (Portal): Follow AZURE_PORTAL_DEPLOYMENT.md"
 fi
 
-echo ""
-echo -e "${YELLOW}Step 5: Create Copilot Studio Agent (Manual)${NC}"
-echo ""
-echo "Complete these steps in Copilot Studio UI:"
-echo "  1. Go to https://copilotstudio.microsoft.com"
-echo "  2. Create new agent 'Muse'"
-echo "  3. Create OAuth2 connector:"
-echo "       Client ID: $APP_ID"
-echo "       Client Secret: $CLIENT_SECRET"
-echo "       Tenant ID: $TENANT_ID"
-echo "       Token endpoint: https://login.microsoftonline.com/$TENANT_ID/oauth2/v2.0/token"
-echo "       Resource: https://$APP_SERVICE_NAME.azurewebsites.net"
-echo "  4. Add action 'Send Message' → POST $APP_URL/api/copilot/chat"
-echo "  5. Test and publish"
-echo ""
-
-echo -e "${GREEN}=== Deployment Complete ===${NC}"
-echo ""
-echo "Save these values:"
-echo "  App Service URL: $APP_URL"
-echo "  Client ID: $APP_ID"
-echo "  Tenant ID: $TENANT_ID"
-echo ""
-echo "Next: Complete Copilot Studio agent creation (see steps above)"
-
+exit $DEPLOY_SUCCESS
