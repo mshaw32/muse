@@ -33,7 +33,7 @@ echo ""
 # Step 1: Login
 echo -e "${YELLOW}[1/5] Authenticating to Azure...${NC}"
 if az account show &>/dev/null; then
-    CURRENT_TENANT=$(az account show --query "tenantId" -o tsv)
+    CURRENT_TENANT=$(az account show --query "tenantId" -o tsv 2>/dev/null)
     if [ "$CURRENT_TENANT" != "$TENANT_ID" ]; then
         echo "Wrong tenant. Logging in..."
         az login --tenant $TENANT_ID
@@ -48,32 +48,53 @@ fi
 echo ""
 
 # Step 2: Create App Service Plan
-echo -e "${YELLOW}[2/5] Creating App Service Plan...${NC}"
-az appservice plan create \
+echo -e "${YELLOW}[2/5] Creating App Service Plan: $PLAN_NAME${NC}"
+
+PLAN_EXISTS=$(az appservice plan show \
   --name $PLAN_NAME \
   --resource-group $RESOURCE_GROUP \
-  --sku B1 \
-  --is-linux \
-  --output none 2>/dev/null || true
+  --query "id" -o tsv 2>/dev/null || echo "")
 
-echo -e "${GREEN}✓ Plan ready${NC}"
+if [ -z "$PLAN_EXISTS" ]; then
+    echo "Plan doesn't exist, creating..."
+    az appservice plan create \
+      --name $PLAN_NAME \
+      --resource-group $RESOURCE_GROUP \
+      --sku B1 \
+      --is-linux
+    echo -e "${GREEN}✓ Plan created${NC}"
+else
+    echo -e "${GREEN}✓ Plan already exists${NC}"
+fi
+
 echo ""
 
 # Step 3: Create App Service
-echo -e "${YELLOW}[3/5] Creating App Service...${NC}"
-az webapp create \
+echo -e "${YELLOW}[3/5] Creating App Service: $APP_SERVICE_NAME${NC}"
+
+APP_EXISTS=$(az webapp show \
   --resource-group $RESOURCE_GROUP \
-  --plan $PLAN_NAME \
   --name $APP_SERVICE_NAME \
-  --runtime "NODE|18-lts" \
-  --output none 2>/dev/null || true
+  --query "id" -o tsv 2>/dev/null || echo "")
+
+if [ -z "$APP_EXISTS" ]; then
+    echo "App Service doesn't exist, creating..."
+    az webapp create \
+      --resource-group $RESOURCE_GROUP \
+      --plan $PLAN_NAME \
+      --name $APP_SERVICE_NAME \
+      --runtime "NODE|18-lts"
+    echo -e "${GREEN}✓ App Service created${NC}"
+else
+    echo -e "${GREEN}✓ App Service already exists${NC}"
+fi
 
 APP_URL=$(az webapp show \
   --resource-group $RESOURCE_GROUP \
   --name $APP_SERVICE_NAME \
   --query "defaultHostName" -o tsv)
 
-echo -e "${GREEN}✓ App Service created: https://$APP_URL${NC}"
+echo "App Service URL: https://$APP_URL"
 echo ""
 
 # Step 4: Deploy backend code
@@ -83,16 +104,17 @@ cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure
 # Build the backend
 echo "Building backend..."
 cd backend
-npm install --omit=dev --silent 2>/dev/null || true
+npm install --omit=dev --silent 2>/dev/null || echo "npm install skipped"
 cd ..
 
 # Deploy
+echo "Uploading code to App Service..."
 az webapp up \
   --resource-group $RESOURCE_GROUP \
   --name $APP_SERVICE_NAME \
   --src-dir backend \
   --runtime "NODE|18-lts" \
-  --output none 2>/dev/null || true
+  --output none
 
 echo -e "${GREEN}✓ Code deployed${NC}"
 echo ""
