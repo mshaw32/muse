@@ -58,12 +58,10 @@ cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure/back
 
 npm install --omit=dev
 
-cd ..
-
+# az webapp up runs from current directory (backend)
 az webapp up \
   --resource-group rg-mbgsol-muse-dev \
   --name muse-backend \
-  --src-dir backend \
   --runtime "NODE:22-lts"
 ```
 

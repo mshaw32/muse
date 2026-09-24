@@ -99,22 +99,21 @@ echo ""
 
 # Step 4: Deploy backend code
 echo -e "${YELLOW}[4/5] Deploying backend code...${NC}"
-cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure
+
+# Go to repo root, then backend
+REPO_ROOT=$(cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure && pwd)
+cd "$REPO_ROOT/backend"
 
 # Build the backend
 echo "Building backend..."
-cd backend
 npm install --omit=dev --silent 2>/dev/null || echo "npm install skipped"
-cd ..
 
-# Deploy
+# Deploy from backend directory (az webapp up runs from cwd)
 echo "Uploading code to App Service..."
 az webapp up \
   --resource-group $RESOURCE_GROUP \
   --name $APP_SERVICE_NAME \
-  --src-dir backend \
-  --runtime "NODE:22-lts" \
-  --output none
+  --runtime "NODE:22-lts"
 
 echo -e "${GREEN}✓ Code deployed${NC}"
 echo ""
