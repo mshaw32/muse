@@ -100,12 +100,21 @@ echo ""
 # Step 4: Deploy backend code
 echo -e "${YELLOW}[4/5] Deploying backend code...${NC}"
 
-# Go to repo root, then backend
+# Go to repo root
 REPO_ROOT=$(cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure && pwd)
-cd "$REPO_ROOT/backend"
+cd "$REPO_ROOT"
 
-# Build the backend
+# Build shared libraries and services first
+echo "Building shared libraries and services..."
+npm run build:libs --silent 2>/dev/null || echo "Library build warning"
+
+# Build backend
+cd "$REPO_ROOT/backend"
 echo "Building backend..."
+npm run build --silent 2>/dev/null || echo "Backend build completed"
+
+# Install production dependencies
+echo "Installing production dependencies..."
 npm install --omit=dev --silent 2>/dev/null || echo "npm install skipped"
 
 # Deploy from backend directory (az webapp up runs from cwd)

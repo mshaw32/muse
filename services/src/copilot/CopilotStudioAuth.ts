@@ -203,6 +203,24 @@ export class CopilotStudioAuth {
   }
 
   /**
+   * Explicit authenticate call (gets access token and returns status).
+   */
+  async authenticate(): Promise<AuthStatus> {
+    try {
+      await this.getAccessToken();
+      return this.getStatus();
+    } catch (error) {
+      this.logger.error("Explicit authenticate failed", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      return {
+        connectionStatus: "disconnected",
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }
+
+  /**
    * Get authentication status.
    */
   getStatus(): AuthStatus {

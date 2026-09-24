@@ -14,8 +14,8 @@ import {
   CopilotChatRequest,
   CopilotChatResponse,
   CopilotCitation,
-  CopilotSessionManager,
-} from "./CopilotSessionManager";
+} from "./CopilotModels";
+import { CopilotSessionManager } from "./CopilotSessionManager";
 
 export interface CopilotStudioChatRequest {
   conversationId: EntityId;
@@ -287,7 +287,7 @@ You have access to personal vault data (projects, customers, decisions, learning
   async testConnection(): Promise<boolean> {
     try {
       const status = this.auth.getStatus();
-      this.logger.info("Auth status", status);
+      this.logger.info("Auth status", status as unknown as Record<string, unknown>);
 
       // Try to refresh token to verify auth works
       await this.auth.getAccessToken();

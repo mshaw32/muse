@@ -52,9 +52,23 @@ You'll need this for Copilot Studio.
 
 ---
 
+## STEP 4b: Build Shared Libraries
+
+```bash
+cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure
+
+npm run build:libs
+```
+
+Wait for it to complete. Should take 1-2 minutes.
+
+---
+
 ## STEP 5: Deploy Your Code
 ```bash
 cd /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure/backend
+
+npm run build
 
 npm install --omit=dev
 
