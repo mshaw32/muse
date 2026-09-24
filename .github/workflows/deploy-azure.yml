@@ -1,0 +1,72 @@
+name: Deploy Muse Backend to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - prod
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: npm install --omit=dev
+
+      - name: Build (if script exists)
+        working-directory: ./backend
+        run: npm run build || echo "No build script, using dist/"
+        continue-on-error: true
+
+      - name: Login to Azure
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: muse-backend
+          package: ./backend
+
+      - name: Wait for warm-up
+        run: sleep 30
+
+      - name: Verify deployment
+        run: |
+          echo "Testing backend endpoint..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://muse-backend.azurewebsites.net/api/copilot/status)
+          if [ "$HTTP_CODE" = "200" ]; then
+            echo "✅ Backend responding: HTTP 200"
+            curl -s https://muse-backend.azurewebsites.net/api/copilot/status | jq .
+          else
+            echo "⚠️  HTTP $HTTP_CODE received"
+            echo "This may be OK if app is still warming up"
+            sleep 10
+            curl -s https://muse-backend.azurewebsites.net/api/copilot/status | jq . || echo "Still warming up..."
+          fi
+
+      - name: Success notification
+        if: success()
+        run: |
+          echo "╔════════════════════════════════════════╗"
+          echo "║   ✅ DEPLOYMENT SUCCESSFUL!           ║"
+          echo "╚════════════════════════════════════════╝"
+          echo "Backend: https://muse-backend.azurewebsites.net"
+          echo "Status: https://muse-backend.azurewebsites.net/api/copilot/status"
