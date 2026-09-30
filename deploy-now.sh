@@ -5,14 +5,14 @@
 #
 # Prerequisites: 
 #   - az login (must be logged in to Azure)
-#   - muse-backend-deploy-v3.zip (in current directory)
+#   - muse-backend-deploy-v4.zip (in current directory)
 #
 # Usage: ./deploy-now.sh
 
 set -e
 
 echo "╔════════════════════════════════════════════════════════════════╗"
-echo "║         Muse Backend - Azure Deployment                       ║"
+echo "║         Muse Backend - Azure Deployment (v4 - FIXED)          ║"
 echo "╚════════════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -25,8 +25,8 @@ if ! az account show &> /dev/null; then
 fi
 
 # Check if zip exists
-if [ ! -f "muse-backend-deploy-v3.zip" ]; then
-    echo "❌ muse-backend-deploy-v3.zip not found"
+if [ ! -f "muse-backend-deploy-v4.zip" ]; then
+    echo "❌ muse-backend-deploy-v4.zip not found"
     echo ""
     echo "Make sure you're in:"
     echo "  /Users/948471/Projects/copilot-worktrees/muse/mshaw32-upgraded-adventure"
@@ -35,14 +35,14 @@ fi
 
 echo "✅ Ready to deploy"
 echo ""
-echo "Uploading muse-backend-deploy-v3.zip..."
+echo "Uploading muse-backend-deploy-v4.zip..."
 echo ""
 
 # Deploy
 az webapp deployment source config-zip \
   --resource-group "rg-mbgsol-muse-dev" \
   --name "muse-backend" \
-  --src "muse-backend-deploy-v3.zip"
+  --src "muse-backend-deploy-v4.zip"
 
 echo ""
 echo "✅ Upload complete!"
