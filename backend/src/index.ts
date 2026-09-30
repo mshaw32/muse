@@ -14,6 +14,23 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.use(cors());
 app.use(express.json());
 
+app.get("/", (req, res) => {
+  res.json({
+    name: "MUSE Backend",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      health: "/health",
+      copilot: "/api/copilot",
+      voice: "/api/voice",
+      vault: "/api/vault-search",
+      memory: "/api/memory",
+      actions: "/api/actions",
+      session: "/api/session"
+    }
+  });
+});
+
 app.use("/health", healthRouter);
 app.use("/api/voice", voiceRouter);
 app.use("/api/vault-search", vaultSearchRouter);
