@@ -7,8 +7,27 @@
  * single active-session state directly.
  */
 
-import { generateId, nowISO } from "@muse/shared";
-import type { VoiceSessionSnapshot, VoiceTranscript } from "@muse/services";
+// Stub implementations for utilities that were in @muse/shared
+function generateId(prefix: string): string {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+function nowISO(): string {
+  return new Date().toISOString();
+}
+
+// Type definitions that were in @muse/services
+interface VoiceSessionSnapshot {
+  id: string;
+  startedAt: string;
+  [key: string]: any;
+}
+
+interface VoiceTranscript {
+  text: string;
+  confidence: number;
+  isFinal: boolean;
+}
 
 export interface VoiceSessionRecord {
   id: string;

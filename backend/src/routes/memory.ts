@@ -1,6 +1,7 @@
 import { Router, Request, Response } from "express";
 import { getRuntime } from "../runtime";
-import { MemoryCategory } from "@muse/services";
+import { MemoryCategory } from "../services/MuseRuntime";
+
 
 const router = Router();
 

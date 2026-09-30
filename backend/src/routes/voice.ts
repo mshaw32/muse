@@ -120,8 +120,8 @@ router.get("/status", (_req: Request, res: Response) => {
   const foundryStatus = voiceIntegration.getFoundryStatus();
   res.json({
     status: "ok",
-    ...status,
-    ...foundryStatus,
+    voiceStatus: status,
+    foundryStatus: foundryStatus,
     partialTranscript: voiceIntegration.getPartialTranscript(),
     finalTranscript: voiceIntegration.getLastTranscript(),
   });
@@ -159,7 +159,7 @@ router.post("/audio", (req: Request, res: Response) => {
 router.get("/diagnostics", async (_req: Request, res: Response) => {
   try {
     const report = await getVoiceIntegration().azureVoice.runDiagnostics();
-    res.json({ status: "ok", ...report });
+    res.json({ status: "ok", diagnostics: report });
   } catch (error) {
     res.status(500).json({ status: "error", message: error instanceof Error ? error.message : "diagnostics_failed" });
   }

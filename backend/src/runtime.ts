@@ -7,7 +7,7 @@
  */
 
 import * as path from "path";
-import { MuseRuntime } from "@muse/services";
+import { MuseRuntime } from "./services/MuseRuntime";
 
 const vaultRoot = path.resolve(__dirname, "..", "..", "vault");
 const dataDirectory = path.resolve(__dirname, "..", ".muse-data");
