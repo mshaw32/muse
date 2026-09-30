@@ -7,7 +7,7 @@
  * duplicating generation logic.
  */
 
-import { generateId, nowISO } from "@muse/shared";
+import { generateId, nowISO } from "./shared";
 import { Citation, Source, SourceType } from "./CopilotModels";
 
 const FILE_TITLES = [

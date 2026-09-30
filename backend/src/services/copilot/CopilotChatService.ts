@@ -7,7 +7,7 @@
  * (`CopilotMockEngine`) rather than any real network call.
  */
 
-import { EntityId, Logger, generateId, nowISO } from "@muse/shared";
+import { EntityId, Logger, generateId, nowISO } from "./shared";
 import { Conversation, Message } from "./CopilotModels";
 import { buildCitations, buildMockSources, chunkAnswer, generateMockAnswer } from "./CopilotMockEngine";
 import { CopilotLogger, copilotLogger } from "./CopilotLogger";

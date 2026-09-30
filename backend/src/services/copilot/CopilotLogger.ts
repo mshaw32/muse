@@ -6,7 +6,7 @@
  * genuine Microsoft 365 Copilot API is wired in (Phase 4).
  */
 
-import { Logger, nowISO } from "@muse/shared";
+import { Logger, nowISO } from "./shared";
 
 export interface CopilotLogEvent {
   event: "prompt" | "response" | "sources" | "error" | "latency";

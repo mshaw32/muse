@@ -7,7 +7,7 @@
  * the lower-level prompt/response mechanics in `CopilotChatService`.
  */
 
-import { EntityId, Logger } from "@muse/shared";
+import { EntityId, Logger } from "./shared";
 import { CopilotChatService } from "./CopilotChatService";
 import { Conversation, ConversationExport } from "./CopilotModels";
 

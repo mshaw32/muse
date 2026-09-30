@@ -10,7 +10,66 @@ import { CopilotAuthService } from "./CopilotAuthService";
 import { CopilotChatService } from "./CopilotChatService";
 import { CopilotRetrievalService } from "./CopilotRetrievalService";
 import { CopilotConversationService } from "./CopilotConversationService";
-import { CopilotStudioAuth, CopilotStudioAdapter, CopilotSessionManager } from "@muse/services";
+
+// Phase 3/4: Local stubs for Copilot Studio integration
+// Real implementations will replace these when Azure Copilot credentials are configured
+interface CopilotAuthConfig {
+  endpoint?: string;
+  clientId?: string;
+  clientSecret?: string;
+  tenantId?: string;
+}
+
+class CopilotStudioAuth {
+  constructor(config: CopilotAuthConfig) {
+    console.log("[CopilotStudioAuth] Mock instance - Phase 3/4 feature");
+  }
+
+  async authenticate(): Promise<any> {
+    return { token: "mock-token", expiresIn: 3600 };
+  }
+
+  getStatus(): any {
+    return { authenticated: false, user: null };
+  }
+
+  logout(): Promise<void> {
+    return Promise.resolve();
+  }
+}
+
+class CopilotSessionManager {
+  startSession(): any {
+    return { id: "mock-session-" + Date.now() };
+  }
+
+  getActiveSession(): any {
+    return null;
+  }
+}
+
+class CopilotStudioAdapter {
+  constructor(auth: CopilotStudioAuth, sessionManager: CopilotSessionManager) {
+    console.log("[CopilotStudioAdapter] Mock instance - Phase 3/4 feature");
+  }
+
+  async sendPrompt(options: any): Promise<any> {
+    return { response: "Phase 3/4 feature - real Copilot Studio not yet configured" };
+  }
+
+  async *streamResponse(options: any): AsyncGenerator<any, void, unknown> {
+    yield { type: "start", message: "Phase 3/4 feature - streaming not yet configured" };
+    yield { type: "end" };
+  }
+
+  async summarizeConversation(options: any): Promise<any> {
+    return { summary: "Phase 3/4 feature" };
+  }
+
+  get conversations(): any {
+    return {};
+  }
+}
 
 /**
  * Facade bundling the Phase 3 Copilot integration services. The backend

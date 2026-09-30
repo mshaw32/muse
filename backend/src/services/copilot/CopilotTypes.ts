@@ -6,7 +6,7 @@
  * hardcoded here — `CopilotAuthService` only ever produces mock values.
  */
 
-import { ISOTimestamp } from "@muse/shared";
+import { ISOTimestamp } from "./shared";
 
 /** High level authentication state machine for the Copilot connection. */
 export type CopilotAuthState = "unauthenticated" | "authenticating" | "authenticated" | "error";

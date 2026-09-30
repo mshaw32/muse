@@ -8,7 +8,7 @@
  * keeps its own request/response contracts stable for the frontend.
  */
 
-import { EntityId, ISOTimestamp } from "@muse/shared";
+import { EntityId, ISOTimestamp } from "./shared";
 
 export type ConversationRole = "user" | "assistant" | "system";
 

@@ -9,7 +9,7 @@
  * against ahead of real MSAL/Entra ID integration in a later phase.
  */
 
-import { Logger, generateId, nowISO } from "@muse/shared";
+import { Logger, generateId, nowISO } from "./shared";
 import { CopilotAuthStatus, CopilotAuthState, CopilotConnectionStatus } from "./CopilotTypes";
 
 const MOCK_AUTH_LATENCY_MS = 350;
