@@ -15,6 +15,7 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@azure/identity": "^4.2.1",
     "cors": "^2.8.5",
     "express": "^4.21.1"
   },
