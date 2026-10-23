@@ -77,9 +77,10 @@ router.post("/chat/stream", async (req: Request, res: Response) => {
   });
 
   const chat = getCopilotIntegration().chat;
+  const memoryContext = buildMemoryContext(text);
 
   try {
-    for await (const chunk of chat.streamResponse({ conversationId, prompt: text })) {
+    for await (const chunk of chat.streamResponse({ conversationId, prompt: text, memoryContext })) {
       res.write(`data: ${JSON.stringify(chunk)}\n\n`);
     }
   } catch (error) {
@@ -88,6 +89,19 @@ router.post("/chat/stream", async (req: Request, res: Response) => {
     res.end();
   }
 });
+
+function buildMemoryContext(prompt: string): string {
+  const memoryResults = getRuntime().memory.search({ query: prompt, limit: 5 });
+  const vaultResults = getRuntime().memory.searchVault(prompt, 5);
+
+  const memoryLines = memoryResults.map((entry) => entry.content).filter(Boolean);
+  const vaultLines = vaultResults
+    .map((entry: any) => entry?.snippet || entry?.content || entry?.title)
+    .filter((value: string | undefined): value is string => Boolean(value));
+
+  const combined = [...memoryLines, ...vaultLines].slice(0, 8);
+  return combined.join("\n");
+}
 
 /**
  * POST /api/copilot/retrieve

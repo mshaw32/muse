@@ -34,7 +34,25 @@
 
 ---
 
-## PHASE 2 STEP-BY-STEP IMPLEMENTATION
+## PHASE 2 IMPLEMENTATION STATUS
+
+✅ Implemented in current backend architecture:
+- `POST /api/copilot/chat/stream` SSE route is active in `backend/src/routes/copilot.ts`
+- Memory context is now injected into streaming prompts via:
+  - `getRuntime().memory.search(...)`
+  - `getRuntime().memory.searchVault(...)`
+  - combined as `memoryContext` for chat streaming
+- `CopilotChatService.streamResponse(...)` and `sendPrompt(...)` now accept optional `memoryContext`
+- Project builds successfully after these changes
+
+⚠️ Important: this repo does **not** use `backend/src/adapters/CopilotStudioAdapter.ts`.
+The active streaming implementation is in:
+- `backend/src/services/copilot/CopilotChatService.ts`
+- `backend/src/routes/copilot.ts`
+
+---
+
+## PHASE 2 STEP-BY-STEP IMPLEMENTATION (Reference)
 
 ### PART 1: Set Up Memory Vault Reader (2 hours)
 
@@ -45,6 +63,11 @@
 
 #### Step 1.1: Create Memory Service
 **File:** `backend/src/services/memory/MemoryVaultService.ts`
+
+> NOTE: In the current branch, memory context is wired through
+> `getRuntime().memory.search(...)` and `getRuntime().memory.searchVault(...)`
+> in `backend/src/routes/copilot.ts`. You can still introduce
+> `MemoryVaultService.ts` later if you want a dedicated abstraction layer.
 
 **What it does:**
 - Reads .md files from your vault folder
@@ -122,6 +145,9 @@ npx ts-node -e "
 
 #### Step 2.1: Create StreamResponse Method in CopilotStudioAdapter
 **File:** `backend/src/adapters/CopilotStudioAdapter.ts`
+
+> NOTE: This path is from an older design. In this repository, use
+> `backend/src/services/copilot/CopilotChatService.ts` instead.
 
 **Add this method to the class:**
 ```typescript

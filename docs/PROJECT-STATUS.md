@@ -110,6 +110,12 @@ npm workspaces tie these five packages together (`shared`, `services`,
 - New frontend layout components: `Sidebar`, `ContextPanel`, `StatusBar`,
   plus `useElectronBridge.ts` hook for renderer↔main IPC.
 - Explicitly **not** implemented in Phase 2: Microsoft Graph crawlers.
+- Phase 2 completion update (2026-10-23):
+  - Memory-augmented streaming is now wired in the backend Copilot route.
+  - `POST /api/copilot/chat/stream` builds memory context from runtime memory
+    and vault search and forwards it into Copilot chat streaming.
+  - `CopilotChatService` now supports optional `memoryContext` in prompt handling
+    for both full-response and streaming-response generation paths.
 
 ### Phase 3 — Copilot integration (Enterprise Intelligence Layer)
 - Full service layer: `CopilotAuthService` (mock login/logout/status),

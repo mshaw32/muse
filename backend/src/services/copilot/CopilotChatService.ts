@@ -15,6 +15,7 @@ import { CopilotLogger, copilotLogger } from "./CopilotLogger";
 export interface SendPromptOptions {
   conversationId?: EntityId;
   prompt: string;
+  memoryContext?: string;
 }
 
 export interface StreamChunk {
@@ -34,6 +35,14 @@ export class CopilotChatService {
   constructor(logger: Logger = new Logger("muse:copilot:chat"), telemetry: CopilotLogger = copilotLogger) {
     this.logger = logger;
     this.telemetry = telemetry;
+  }
+
+  private buildPromptWithMemory(prompt: string, memoryContext?: string): string {
+    if (!memoryContext || memoryContext.trim().length === 0) {
+      return prompt;
+    }
+
+    return `${prompt}\n\n[Memory Context]\n${memoryContext}`;
   }
 
   private getOrCreateConversation(conversationId?: EntityId): Conversation {
@@ -65,7 +74,8 @@ export class CopilotChatService {
   async sendPrompt(options: SendPromptOptions): Promise<{ conversation: Conversation; message: Message }> {
     const start = Date.now();
     const conversation = this.getOrCreateConversation(options.conversationId);
-    this.telemetry.logPrompt(conversation.id, options.prompt);
+    const groundedPrompt = this.buildPromptWithMemory(options.prompt, options.memoryContext);
+    this.telemetry.logPrompt(conversation.id, groundedPrompt);
 
     const userMessage: Message = {
       id: generateId("msg"),
@@ -75,9 +85,9 @@ export class CopilotChatService {
     };
     conversation.messages.push(userMessage);
 
-    const sources = buildMockSources(options.prompt);
+    const sources = buildMockSources(groundedPrompt);
     const citations = buildCitations(sources);
-    const answer = generateMockAnswer(options.prompt, citations);
+    const answer = generateMockAnswer(groundedPrompt, citations);
 
     const assistantMessage: Message = {
       id: generateId("msg"),
@@ -131,7 +141,8 @@ export class CopilotChatService {
   async *streamResponse(options: SendPromptOptions): AsyncGenerator<StreamChunk> {
     const start = Date.now();
     const conversation = this.getOrCreateConversation(options.conversationId);
-    this.telemetry.logPrompt(conversation.id, options.prompt);
+    const groundedPrompt = this.buildPromptWithMemory(options.prompt, options.memoryContext);
+    this.telemetry.logPrompt(conversation.id, groundedPrompt);
 
     const userMessage: Message = {
       id: generateId("msg"),
@@ -143,9 +154,9 @@ export class CopilotChatService {
     conversation.state = "streaming";
     conversation.updatedAt = nowISO();
 
-    const sources = buildMockSources(options.prompt);
+    const sources = buildMockSources(groundedPrompt);
     const citations = buildCitations(sources);
-    const answer = generateMockAnswer(options.prompt, citations);
+    const answer = generateMockAnswer(groundedPrompt, citations);
     const chunks = chunkAnswer(answer);
 
     let accumulated = "";
