@@ -38,6 +38,11 @@
 
 ### PART 1: Set Up Memory Vault Reader (2 hours)
 
+**Run this work from:** `backend/`
+
+**Vault location:** repo-root `vault/` folder
+(`.../mshaw32-upgraded-adventure/vault/*.md`)
+
 #### Step 1.1: Create Memory Service
 **File:** `backend/src/services/memory/MemoryVaultService.ts`
 
